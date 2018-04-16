@@ -133,7 +133,35 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			}
 		}
 	}
+	
+	// reset file handler
+	in.clear() ;
+	in.seekg(0, in.beg);
 
+	// 3) parse wires, line by line
+	//
+	while (std::getline(in, line)) {
+
+		// skip all the irrelevant lines
+		if (!(line.find("wire") != std::string::npos && line.find(";") != std::string::npos)) {
+			continue;
+		}
+		// process all the relevant lines
+		else {
+			std::istringstream linestream(line);
+
+			// drop "wire";
+			linestream >> tmpstr;
+
+			// parse the wire name, without the final ";"
+			linestream >> tmpstr;
+			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
+
+			netlist->wires.push_back(tmpstr);
+		}
+	}
+
+	// finally, close file
 	in.close();
 
 	// dbg log of parsed tuples
@@ -169,6 +197,14 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 		for (auto const& output : netlist->outputs_F2F) {
 
 			std::cout << "IO_DBG>  " << output;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all wires: " << std::endl;
+
+		for (auto const& wire : netlist->wires) {
+
+			std::cout << "IO_DBG>  " << wire;
 			std::cout << std::endl;
 		}
 	}
