@@ -83,7 +83,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 			// parse the input name, without the final ";"
 			linestream >> tmpstr;
-			tmpstr = tmpstr.substr(0, tmpstr.find(";") - 1);
+			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
 			// differentiate between global inputs and F2F inputs; the latter have an "_" in the name
 			// 
