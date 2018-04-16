@@ -9,7 +9,7 @@
 class Attack {
 	private:
 		/// debugging code switch (private)
-		static constexpr bool DBG = false;
+		static constexpr bool DBG = true;
 
 	// private data, functions
 	private:
@@ -19,7 +19,7 @@ class Attack {
 
 	// public data, functions
 	public:
-		//static void determineAllPaths(Data& data);
+		static void initGraph(Data& data);
 		//static void explorePath(Data& data, Data::path const& path, std::vector<Data::path> assigned_paths, std::list<Data::path> remaining_paths, unsigned recursive_level = 1);
 };
 

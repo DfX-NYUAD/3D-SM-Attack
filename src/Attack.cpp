@@ -23,24 +23,8 @@ int main (int argc, char** argv) {
 	// parse top tier netlist
 	IO::parseNetlist(data, true);
 
-	//// parse cross to sinks mapping in the bottom tier
-	//IO::parseSinkMapping(data, false);
-	//// parse driver to crosses mapping in the top tier
-	//IO::parseDriverMapping(data, true);
-
-	//// parse cross to sinks mapping in the top tier
-	//IO::parseSinkMapping(data, true);
-	//// parse driver to crosses mapping in the bottom tier
-	//IO::parseDriverMapping(data, false);
-
-	//// TODO for global source/sink, for cycle detection
-	//// initialize dummy nodes
-	//data.dummies.dummyDriver.id = 0;
-	//data.dummies.dummyDriver.name = "DUMMY";
-	//data.dummies.dummyCross.id = 0;
-	//data.dummies.dummyCross.name = "DUMMY";
-	//data.dummies.dummySink.id = 0;
-	//data.dummies.dummySink.name = "DUMMY";
+	// initialize the graph
+	Attack::initGraph(data);
 
 //	// explore all the possible driver->cross->sink paths and the related mappings
 //	Attack::determineAllPaths(data);
@@ -98,7 +82,100 @@ int main (int argc, char** argv) {
 //		}
 //	}
 };
-//
+
+void Attack::initGraph(Data& data) {
+
+	std::cout << "Attack> Initializing the graph ..." << std::endl;
+
+	// add primary inputs as nodes
+	for (auto const& input : data.netlist.inputs_global) {
+
+		Data::Node new_node;
+		new_node.name = input;
+
+		data.nodes.insert(std::make_pair(
+					new_node.name,
+					new_node
+				));
+
+		// also add new node for primary inputs as child to global source
+		data.globalNodes.source.children.emplace_back( &(data.nodes[input]) );
+	}
+
+	// add primary outputs as nodes
+	for (auto const& output : data.netlist.outputs_global) {
+
+		data.nodes.insert(std::make_pair(
+					output,
+					Data::Node(output)
+				));
+
+		// also add primary outputs as parent for global sink
+		data.globalNodes.sink.parents.emplace_back( &(data.nodes[output]) );
+	}
+
+	// add global sink/source as nodes
+	data.nodes.insert(std::make_pair(
+				data.globalNodes.source.name,
+				data.globalNodes.source
+			));
+	data.nodes.insert(std::make_pair(
+				data.globalNodes.sink.name,
+				data.globalNodes.sink
+			));
+
+	// add gates as nodes
+	for (auto const& gate_iter : data.netlist.gates) {
+		Data::Gate const& gate = gate_iter.second;
+
+		data.nodes.insert(std::make_pair(
+					gate.name,
+					Data::Node(gate.name)
+				));
+	}
+
+	//// TODO connect graph based on connectivity of gates
+	//for (auto const& gate : data.netlist.gates) {
+	//}
+
+	// dbg log and regular log
+	//
+	if (Attack::DBG) {
+
+		std::cout << "DBG> Print all nodes: " << std::endl;
+	}
+
+	// count all edges
+	int edges = 0;
+	for (auto const& node_iter : data.nodes) {
+		auto const& node = node_iter.second;
+
+		edges += node.children.size();
+		edges += node.parents.size();
+
+		if (Attack::DBG) {
+			std::cout << "DBG>  " << node.name << ":" << std::endl;
+
+			std::cout << "DBG>   Children [" << node.children.size() << "]:";
+			for (auto const* child : node.children) {
+				std::cout << " " << child->name;
+			}
+			std::cout << std::endl;
+
+			std::cout << "DBG>   Parents [" << node.parents.size() << "]:";
+			for (auto const* parent : node.parents) {
+				std::cout << " " << parent->name;
+			}
+			std::cout << std::endl;
+		}
+	}
+
+	std::cout << "Attack> Done" << std::endl;
+	std::cout << "Attack>  Nodes: " << data.nodes.size() << std::endl;
+	std::cout << "Attack>  Edges: " << edges << std::endl;
+	std::cout << "Attack> " << std::endl;
+}
+
 //// explore paths recursively, work on copies of paths from prior recursion level
 ////
 //void Attack::explorePath(Data& data, Data::path const& path, std::vector<Data::path> assigned_paths, std::list<Data::path> remaining_paths, unsigned recursive_level) {

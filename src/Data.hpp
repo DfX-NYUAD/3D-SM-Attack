@@ -43,9 +43,22 @@ class Data {
 			// name of gate or pin
 			std::string name;
 
+			//enum class type : unsigned {gate, input_pin, output_pin};
+
 			std::vector<Node const*> parents;
 			std::vector<Node const*> children;
+
+			Node(
+				std::string n = "",
+				std::vector<Node const*> p = std::vector<Node const*>(),
+				std::vector<Node const*> c = std::vector<Node const*>()
+			) : name(n), parents(p), children(c) {}
 		};
+		// global source/sink
+		struct globalNodes {
+			Node source = Node("GLOBAL_SOURCE");
+			Node sink = Node("GLOBAL_SINK");
+		} globalNodes;
 		// actual container
 		// mapping: name, node
 		std::unordered_map<std::string, Node> nodes;
@@ -61,13 +74,13 @@ class Data {
 
 		// PODs for netlists
 		struct Netlist {
-			// I/Os can definitely be redundant in top/bottom tier
+			// I/Os can definitely be redundant in top/bottom tier, so we use a std::set here to avoid duplicates
 			std::set<std::string> inputs_global;
 			std::set<std::string> outputs_global;
-			// wires may be redundant
+			// wires may be redundant in top/bottom tier, so we also use a std::set here
 			std::set<std::string> wires;
-			// gates should not redundant
-			std::vector<Gate> gates;
+			// gates should not redundant; for better access, use map
+			std::unordered_map<std::string, Gate> gates;
 		} netlist;
 		
 		// PODs for F2F vias/pins
