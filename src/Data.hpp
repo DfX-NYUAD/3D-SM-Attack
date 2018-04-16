@@ -34,17 +34,20 @@ class Data {
 			std::vector<std::string> inputs;
 			std::vector<std::string> outputs;
 		};
-		// name, cell
+		// actual container
+		// mapping: name, cell
 		std::unordered_map<std::string, Cell> cells;
 
 		// PODs for graph data
 		struct Node {
 			// name of gate or pin
 			std::string name;
+
 			std::vector<Node const*> parents;
 			std::vector<Node const*> children;
 		};
-		// name, node
+		// actual container
+		// mapping: name, node
 		std::unordered_map<std::string, Node> nodes;
 
 		// PODs for gates
@@ -58,38 +61,22 @@ class Data {
 
 		// PODs for netlists
 		struct Netlist {
+			// I/Os can definitely be redundant in top/bottom tier
 			std::set<std::string> inputs_global;
 			std::set<std::string> outputs_global;
-			std::set<std::string> inputs_F2F;
-			std::set<std::string> outputs_F2F;
+			// wires may be redundant
 			std::set<std::string> wires;
+			// gates should not redundant
 			std::vector<Gate> gates;
-
-			//// TODO for global input/output on whole graph
-			//struct dummies {
-			//	driverNode dummyDriver;
-			//	crossNode dummyCross;
-			//	sinkNode dummySink;
-			//} dummies;
-		};
-		struct netlists {
-			Netlist top;
-			Netlist bottom;
-			Netlist merged;
-		} netlists;
-
-		//// PODs for paths
-		//struct path {
-		//	driverNode const* driver;
-		//	crossNode const* cross;
-		//	sinkNode const* sink;
-
-		//	path(driverNode const* d, crossNode const* c, sinkNode const* s) : driver(d), cross(c), sink(s) {}
-		//};
-
-		//// global data structure holding all possible mappings (set of paths)
-		////std::map< std::string, std::vector<Data::path> > mappings;
-		//std::map< std::list< std::pair<unsigned, unsigned> >, std::vector<Data::path> > mappings;
+		} netlist;
+		
+		// PODs for F2F vias/pins
+		struct F2F {
+			std::vector<std::string> bottom_inputs;
+			std::vector<std::string> bottom_outputs;
+			std::vector<std::string> top_inputs;
+			std::vector<std::string> top_outputs;
+		} F2F;
 };
 
 #endif

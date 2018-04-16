@@ -149,15 +149,12 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	std::string line;
 	std::string tmpstr;
 	std::string file;
-	Data::Netlist* netlist;
 
 	if (top_tier) {
 		file = data.files.top_netlist;
-		netlist = &data.netlists.top;
 	}
 	else {
 		file = data.files.bottom_netlist;
-		netlist = &data.netlists.bottom;
 	}
 	in.open(file.c_str());
 
@@ -193,20 +190,17 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// 
 			// F2F input
 			if (tmpstr.find("_") != std::string::npos) {
-				netlist->inputs_F2F.insert(tmpstr);
+
+				if (top_tier) {
+					data.F2F.top_inputs.emplace_back(tmpstr);
+				}
+				else {
+					data.F2F.bottom_inputs.emplace_back(tmpstr);
+				}
 			}
 			// global input
 			else {
-				netlist->inputs_global.insert(tmpstr);
-
-				// also initialize and memorize a related node
-				Data::Node node;
-				node.name = tmpstr;
-
-				data.nodes.insert(std::make_pair(
-							node.name,
-							node
-						));
+				data.netlist.inputs_global.insert(tmpstr);
 			}
 		}
 	}
@@ -238,20 +232,17 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// 
 			// F2F output
 			if (tmpstr.find("_") != std::string::npos) {
-				netlist->outputs_F2F.insert(tmpstr);
+
+				if (top_tier) {
+					data.F2F.top_outputs.emplace_back(tmpstr);
+				}
+				else {
+					data.F2F.bottom_outputs.emplace_back(tmpstr);
+				}
 			}
 			// global output
 			else {
-				netlist->outputs_global.insert(tmpstr);
-
-				// also initialize and memorize a related node
-				Data::Node node;
-				node.name = tmpstr;
-
-				data.nodes.insert(std::make_pair(
-							node.name,
-							node
-						));
+				data.netlist.outputs_global.insert(tmpstr);
 			}
 		}
 	}
@@ -279,7 +270,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			linestream >> tmpstr;
 			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
-			netlist->wires.insert(tmpstr);
+			data.netlist.wires.insert(tmpstr);
 		}
 	}
 
@@ -368,16 +359,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 				//std::cout << "STOP: " << line << std::endl;
 
 				// memorize the gate
-				netlist->gates.emplace_back(new_gate);
-
-				// also initialize and memorize a related node
-				Data::Node node;
-				node.name = new_gate.name;
-
-				data.nodes.insert(std::make_pair(
-							node.name,
-							node
-						));
+				data.netlist.gates.emplace_back(new_gate);
 			}
 		}
 	}
@@ -391,15 +373,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		std::cout << "IO_DBG> Print all inputs_global: " << std::endl;
 
-		for (auto const& input : netlist->inputs_global) {
-
-			std::cout << "IO_DBG>  " << input;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all inputs_F2F: " << std::endl;
-
-		for (auto const& input : netlist->inputs_F2F) {
+		for (auto const& input : data.netlist.inputs_global) {
 
 			std::cout << "IO_DBG>  " << input;
 			std::cout << std::endl;
@@ -407,23 +381,47 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		std::cout << "IO_DBG> Print all outputs_global: " << std::endl;
 
-		for (auto const& output : netlist->outputs_global) {
+		for (auto const& output : data.netlist.outputs_global) {
 
 			std::cout << "IO_DBG>  " << output;
 			std::cout << std::endl;
 		}
 
-		std::cout << "IO_DBG> Print all outputs_F2F: " << std::endl;
+		std::cout << "IO_DBG> Print all bottom_outputs: " << std::endl;
 
-		for (auto const& output : netlist->outputs_F2F) {
+		for (auto const& output : data.F2F.bottom_outputs) {
 
 			std::cout << "IO_DBG>  " << output;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all top_inputs: " << std::endl;
+
+		for (auto const& input : data.F2F.top_inputs) {
+
+			std::cout << "IO_DBG>  " << input;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all top_outputs: " << std::endl;
+
+		for (auto const& output : data.F2F.top_outputs) {
+
+			std::cout << "IO_DBG>  " << output;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all bottom_inputs: " << std::endl;
+
+		for (auto const& input : data.F2F.bottom_inputs) {
+
+			std::cout << "IO_DBG>  " << input;
 			std::cout << std::endl;
 		}
 
 		std::cout << "IO_DBG> Print all wires: " << std::endl;
 
-		for (auto const& wire : netlist->wires) {
+		for (auto const& wire : data.netlist.wires) {
 
 			std::cout << "IO_DBG>  " << wire;
 			std::cout << std::endl;
@@ -431,7 +429,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		std::cout << "IO_DBG> Print all gates: " << std::endl;
 
-		for (auto const& gate : netlist->gates) {
+		for (auto const& gate : data.netlist.gates) {
 
 			std::cout << "IO_DBG>  " << gate.type << " " << gate.name;
 
@@ -451,14 +449,13 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	}
 
 	std::cout << "IO> Done" << std::endl;
-	std::cout << "IO>  Global inputs: " << netlist->inputs_global.size() << std::endl;
-	std::cout << "IO>  Global outputs: " << netlist->outputs_global.size() << std::endl;
-	std::cout << "IO>  F2F inputs: " << netlist->inputs_F2F.size() << std::endl;
-	std::cout << "IO>  F2F outputs: " << netlist->outputs_F2F.size() << std::endl;
-	std::cout << "IO>  Wires: " << netlist->wires.size() << std::endl;
-	std::cout << "IO>  Gates: " << netlist->gates.size() << std::endl;
-	std::cout << "IO> " << std::endl;
-	std::cout << "IO>  Nodes: " << data.nodes.size() << std::endl;
+	std::cout << "IO>  Global inputs: " << data.netlist.inputs_global.size() << std::endl;
+	std::cout << "IO>  Global outputs: " << data.netlist.outputs_global.size() << std::endl;
+	std::cout << "IO>  Bottom F2F inputs: " << data.F2F.bottom_inputs.size() << std::endl;
+	std::cout << "IO>  Bottom F2F outputs: " << data.F2F.bottom_outputs.size() << std::endl;
+	std::cout << "IO>  Top F2F inputs: " << data.F2F.top_inputs.size() << std::endl;
+	std::cout << "IO>  Top F2F outputs: " << data.F2F.top_outputs.size() << std::endl;
+	std::cout << "IO>  Wires: " << data.netlist.wires.size() << std::endl;
+	std::cout << "IO>  Gates: " << data.netlist.gates.size() << std::endl;
 	std::cout << "IO> " << std::endl;
 };
-
