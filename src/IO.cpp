@@ -97,6 +97,42 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			}
 		}
 	}
+	
+	// reset file handler
+	in.clear() ;
+	in.seekg(0, in.beg);
+
+	// 2) parse outputs, line by line
+	//
+	while (std::getline(in, line)) {
+
+		// skip all the irrelevant lines
+		if (!(line.find("output") != std::string::npos && line.find(";") != std::string::npos)) {
+			continue;
+		}
+		// process all the relevant lines
+		else {
+			std::istringstream linestream(line);
+
+			// drop "output";
+			linestream >> tmpstr;
+
+			// parse the output name, without the final ";"
+			linestream >> tmpstr;
+			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
+
+			// differentiate between global outputs and F2F outputs; the latter have an "_" in the name
+			// 
+			// F2F output
+			if (tmpstr.find("_") != std::string::npos) {
+				netlist->outputs_F2F.push_back(tmpstr);
+			}
+			// global output
+			else {
+				netlist->outputs_global.push_back(tmpstr);
+			}
+		}
+	}
 
 	in.close();
 
@@ -117,6 +153,22 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 		for (auto const& input : netlist->inputs_F2F) {
 
 			std::cout << "IO_DBG>  " << input;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all outputs_global: " << std::endl;
+
+		for (auto const& output : netlist->outputs_global) {
+
+			std::cout << "IO_DBG>  " << output;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all outputs_F2F: " << std::endl;
+
+		for (auto const& output : netlist->outputs_F2F) {
+
+			std::cout << "IO_DBG>  " << output;
 			std::cout << std::endl;
 		}
 	}
