@@ -13,6 +13,11 @@ int main (int argc, char** argv) {
 	// parse program parameters and test files
 	IO::parseParametersFiles(data, argc, argv);
 
+	// parse cell inputs
+	IO::parseCells(data, false);
+	// parse cell outputs
+	IO::parseCells(data, true);
+
 	// parse bottom tier netlist
 	IO::parseNetlist(data, false);
 	// parse top tier netlist

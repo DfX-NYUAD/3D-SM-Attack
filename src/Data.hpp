@@ -23,8 +23,19 @@ class Data {
 			std::string bottom_netlist;
 			std::string top_netlist;
 			std::string obfuscated_mappings;
+			std::string cells_inputs;
+			std::string cells_outputs;
 			std::string out_netlist;
 		} files;
+
+		// PODs for cells
+		struct Cell {
+			std::string type;
+			std::vector<std::string> inputs;
+			std::vector<std::string> outputs;
+		};
+		// name, cell
+		std::unordered_map<std::string, Cell> cells;
 
 		// PODs for graph data
 		struct Node {

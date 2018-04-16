@@ -6,12 +6,14 @@
 void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 
 	// print command-line parameters
-	if (argc < 5) {
-		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v mappings.file out.v" << std::endl;
+	if (argc < 7) {
+		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v mappings.file cells.inputs cells.outputs out.v" << std::endl;
 		std::cout << "IO> " << std::endl;
 		std::cout << "IO> Mandatory parameter ``top.v'': Netlist for top tier" << std::endl;
 		std::cout << "IO> Mandatory parameter ``bottom.v'': Netlist for bottom tier" << std::endl;
 		std::cout << "IO> Mandatory parameter ``mappings.file'': File with the obfuscated mappings for the F2F interconnects" << std::endl;
+		std::cout << "IO> Mandatory parameter ``cells.inputs'': All cells and all their inputs" << std::endl;
+		std::cout << "IO> Mandatory parameter ``cells.outputs'': All cells and all their outputs" << std::endl;
 		std::cout << "IO> Mandatory parameter ``out.v'': Recovered netlist" << std::endl;
 		exit(1);
 	}
@@ -20,12 +22,16 @@ void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 	data.files.top_netlist = argv[1];
 	data.files.bottom_netlist = argv[2];
 	data.files.obfuscated_mappings = argv[3];
-	data.files.out_netlist = argv[4];
+	data.files.cells_inputs = argv[4];
+	data.files.cells_outputs = argv[5];
+	data.files.out_netlist = argv[6];
 
 	// test input files
 	IO::testFile(data.files.top_netlist);
 	IO::testFile(data.files.bottom_netlist);
 	IO::testFile(data.files.obfuscated_mappings);
+	IO::testFile(data.files.cells_inputs);
+	IO::testFile(data.files.cells_outputs);
 };
 
 void IO::testFile(std::string const& file) {
@@ -38,6 +44,104 @@ void IO::testFile(std::string const& file) {
 		exit(1);
 	}
 	in.close();
+}
+
+void IO::parseCells(Data& data, bool const& outputs) {
+	std::ifstream in;
+	std::string line;
+	std::string tmpstr;
+	std::string file;
+
+	if (outputs) {
+		file = data.files.cells_outputs;
+	}
+	else {
+		file = data.files.cells_inputs;
+	}
+	in.open(file.c_str());
+
+	std::cout << "IO> Parsing the cells and their ";
+	if (outputs) {
+		std::cout << "outputs ...";
+	}
+	else {
+		std::cout << "inputs ...";
+	}
+	std::cout << std::endl;
+
+	while (std::getline(in, line)) {
+
+		Data::Cell cell;
+		std::istringstream linestream(line);
+
+		// first is cell type
+		linestream >> cell.type;
+
+		// then, any number of I/O pins can follow
+		if (outputs) {
+			while (!linestream.eof()) {
+
+				linestream >> tmpstr;
+				cell.outputs.emplace_back(tmpstr);
+			}
+		}
+		else {
+			while (!linestream.eof()) {
+
+				linestream >> tmpstr;
+				cell.inputs.emplace_back(tmpstr);
+			}
+		}
+
+		// memorize parsed cell; either update existing one or insert new one
+		//
+		auto const iter = data.cells.find(cell.type);
+		if (iter != data.cells.end()) {
+
+			if (outputs) {
+				iter->second.outputs = cell.outputs;
+			}
+			else {
+				iter->second.inputs = cell.inputs;
+			}
+		}
+		else {
+			data.cells.insert(std::make_pair(
+						cell.type,
+						cell
+					));
+		}
+	}
+
+	// dbg log of parsed tuples
+	//
+	if (IO::DBG) {
+
+		std::cout << "IO_DBG> Print all cells: " << std::endl;
+
+		for (auto const& cell_iter : data.cells) {
+			Data::Cell const& cell = cell_iter.second;
+
+			std::cout << "IO_DBG>  " << cell.type;
+
+			std::cout << " OUT = ( ";
+			for (auto const& output : cell.outputs) {
+				std::cout << output << " ";
+			}
+			std::cout << ")";
+			std::cout << " IN = ( ";
+			for (auto const& input : cell.inputs) {
+				std::cout << input << " ";
+			}
+			std::cout << ")";
+
+			std::cout << std::endl;
+		}
+	}
+
+	std::cout << "IO> Done" << std::endl;
+	std::cout << "IO>  Cells: " << data.cells.size() << std::endl;
+	std::cout << "IO> " << std::endl;
 }
 
 void IO::parseNetlist(Data& data, bool const& top_tier) {
@@ -89,11 +193,11 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// 
 			// F2F input
 			if (tmpstr.find("_") != std::string::npos) {
-				netlist->inputs_F2F.push_back(tmpstr);
+				netlist->inputs_F2F.emplace_back(tmpstr);
 			}
 			// global input
 			else {
-				netlist->inputs_global.push_back(tmpstr);
+				netlist->inputs_global.emplace_back(tmpstr);
 			}
 		}
 	}
@@ -125,11 +229,11 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// 
 			// F2F output
 			if (tmpstr.find("_") != std::string::npos) {
-				netlist->outputs_F2F.push_back(tmpstr);
+				netlist->outputs_F2F.emplace_back(tmpstr);
 			}
 			// global output
 			else {
-				netlist->outputs_global.push_back(tmpstr);
+				netlist->outputs_global.emplace_back(tmpstr);
 			}
 		}
 	}
@@ -157,7 +261,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			linestream >> tmpstr;
 			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
-			netlist->wires.push_back(tmpstr);
+			netlist->wires.emplace_back(tmpstr);
 		}
 	}
 

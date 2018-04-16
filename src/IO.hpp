@@ -25,6 +25,7 @@ class IO {
 	public:
 		static void testFile(std::string const& file);
 		static void parseParametersFiles(Data& data, int const& argc, char** argv);
+		static void parseCells(Data& data, bool const& outputs);
 		static void parseNetlist(Data& data, bool const& top_tier);
 };
 
