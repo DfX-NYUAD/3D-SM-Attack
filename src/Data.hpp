@@ -45,11 +45,11 @@ class Data {
 
 		// PODs for netlists
 		struct Netlist {
-			std::vector<std::string> inputs_global;
-			std::vector<std::string> outputs_global;
-			std::vector<std::string> inputs_F2F;
-			std::vector<std::string> outputs_F2F;
-			std::vector<std::string> wires;
+			std::set<std::string> inputs_global;
+			std::set<std::string> outputs_global;
+			std::set<std::string> inputs_F2F;
+			std::set<std::string> outputs_F2F;
+			std::set<std::string> wires;
 			std::vector<Gate> gates;
 
 			// graph representation

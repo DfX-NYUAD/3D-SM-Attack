@@ -89,11 +89,11 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// 
 			// F2F input
 			if (tmpstr.find("_") != std::string::npos) {
-				netlist->inputs_F2F.push_back(tmpstr);
+				netlist->inputs_F2F.insert(tmpstr);
 			}
 			// global input
 			else {
-				netlist->inputs_global.push_back(tmpstr);
+				netlist->inputs_global.insert(tmpstr);
 			}
 		}
 	}
@@ -125,11 +125,11 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// 
 			// F2F output
 			if (tmpstr.find("_") != std::string::npos) {
-				netlist->outputs_F2F.push_back(tmpstr);
+				netlist->outputs_F2F.insert(tmpstr);
 			}
 			// global output
 			else {
-				netlist->outputs_global.push_back(tmpstr);
+				netlist->outputs_global.insert(tmpstr);
 			}
 		}
 	}
@@ -157,7 +157,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			linestream >> tmpstr;
 			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
-			netlist->wires.push_back(tmpstr);
+			netlist->wires.insert(tmpstr);
 		}
 	}
 
