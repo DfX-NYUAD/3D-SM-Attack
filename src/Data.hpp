@@ -50,8 +50,8 @@ class Data {
 			std::string type;
 			std::string name;
 			// cell pin name, net/pin name
-			std::pair<std::string, std::string> inputs;
-			std::pair<std::string, std::string> outputs;
+			std::unordered_map<std::string, std::string> inputs;
+			std::unordered_map<std::string, std::string> outputs;
 		};
 
 		// PODs for netlists

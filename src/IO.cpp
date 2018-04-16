@@ -265,6 +265,96 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 		}
 	}
 
+	// reset file handler
+	in.clear() ;
+	in.seekg(0, in.beg);
+
+	// 4) parse gates, line by line
+	//
+	Data::Gate new_gate;
+	Data::Cell *cell = nullptr;
+
+	while (std::getline(in, line)) {
+
+		// skip all the irrelevant lines
+		if (!(line.find("),") != std::string::npos || line.find("));") != std::string::npos)) {
+			continue;
+		}
+		// process all the relevant lines
+		else {
+			std::istringstream linestream(line);
+
+			// differentiate the different lines
+			//
+			// 1st line has driving strength for cell
+			if (line.find("_X") != std::string::npos) {
+
+				// dbg
+				//std::cout << "START: " << line << std::endl;
+
+				// make that new_gate is a new instance
+				new_gate = Data::Gate();
+
+				// gate type
+				linestream >> new_gate.type;
+				// gate name
+				linestream >> new_gate.name;
+
+				// find related cell; throws an exception otherwise
+				cell = &(data.cells.at(new_gate.type));
+			}
+
+			// all lines contains some output/input pin and its connectivity
+			//
+			// check all the output pins of the related cell
+			for (auto const& pin : cell->outputs) {
+
+				if (line.find("." + pin + "(") != std::string::npos) {
+
+					// memorize the output pin and the net/pins it's connected to
+					//
+					size_t pos_begin = line.find_last_of("(") + 1;
+					size_t pos_end = line.find_first_of(")");
+
+					new_gate.outputs.insert(std::make_pair(
+								pin,
+								line.substr(pos_begin, pos_end - pos_begin)
+							));
+
+					break;
+				}
+			}
+			// check all the input pins of the related cell
+			for (auto const& pin : cell->inputs) {
+
+				if (line.find("." + pin + "(") != std::string::npos) {
+
+					// memorize the input pin and the net/pins it's connected to
+					//
+					size_t pos_begin = line.find_last_of("(") + 1;
+					size_t pos_end = line.find_first_of(")");
+
+					new_gate.inputs.insert(std::make_pair(
+								pin,
+								line.substr(pos_begin, pos_end - pos_begin)
+							));
+
+					break;
+				}
+			}
+
+			// final line has "));"
+			if (line.find("));") != std::string::npos) {
+
+				// dbg
+				//std::cout << "STOP: " << line << std::endl;
+
+				// memorize the gate
+				netlist->gates.emplace_back(new_gate);
+			}
+		}
+	}
+
 	// finally, close file
 	in.close();
 
@@ -309,6 +399,26 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 		for (auto const& wire : netlist->wires) {
 
 			std::cout << "IO_DBG>  " << wire;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all gates: " << std::endl;
+
+		for (auto const& gate : netlist->gates) {
+
+			std::cout << "IO_DBG>  " << gate.type << " " << gate.name;
+
+			std::cout << " OUT = ( ";
+			for (auto const& output : gate.outputs) {
+				std::cout << output.first << ": " << output.second << " ";
+			}
+			std::cout << ")";
+			std::cout << " IN = ( ";
+			for (auto const& input : gate.inputs) {
+				std::cout << input.first << ": " << input.second << " ";
+			}
+			std::cout << ")";
+
 			std::cout << std::endl;
 		}
 	}
