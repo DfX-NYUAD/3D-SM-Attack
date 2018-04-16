@@ -198,6 +198,15 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// global input
 			else {
 				netlist->inputs_global.insert(tmpstr);
+
+				// also initialize and memorize a related node
+				Data::Node node;
+				node.name = tmpstr;
+
+				data.nodes.insert(std::make_pair(
+							node.name,
+							node
+						));
 			}
 		}
 	}
@@ -234,6 +243,15 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			// global output
 			else {
 				netlist->outputs_global.insert(tmpstr);
+
+				// also initialize and memorize a related node
+				Data::Node node;
+				node.name = tmpstr;
+
+				data.nodes.insert(std::make_pair(
+							node.name,
+							node
+						));
 			}
 		}
 	}
@@ -351,6 +369,15 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 				// memorize the gate
 				netlist->gates.emplace_back(new_gate);
+
+				// also initialize and memorize a related node
+				Data::Node node;
+				node.name = new_gate.name;
+
+				data.nodes.insert(std::make_pair(
+							node.name,
+							node
+						));
 			}
 		}
 	}
@@ -430,6 +457,8 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	std::cout << "IO>  F2F outputs: " << netlist->outputs_F2F.size() << std::endl;
 	std::cout << "IO>  Wires: " << netlist->wires.size() << std::endl;
 	std::cout << "IO>  Gates: " << netlist->gates.size() << std::endl;
+	std::cout << "IO> " << std::endl;
+	std::cout << "IO>  Nodes: " << data.nodes.size() << std::endl;
 	std::cout << "IO> " << std::endl;
 };
 

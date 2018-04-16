@@ -39,11 +39,13 @@ class Data {
 
 		// PODs for graph data
 		struct Node {
-			// name of cell or pin
+			// name of gate or pin
 			std::string name;
 			std::vector<Node const*> parents;
 			std::vector<Node const*> children;
 		};
+		// name, node
+		std::unordered_map<std::string, Node> nodes;
 
 		// PODs for gates
 		struct Gate {
@@ -62,9 +64,6 @@ class Data {
 			std::set<std::string> outputs_F2F;
 			std::set<std::string> wires;
 			std::vector<Gate> gates;
-
-			// graph representation
-			std::vector<Node> nodes;
 
 			//// TODO for global input/output on whole graph
 			//struct dummies {
