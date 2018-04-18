@@ -9,7 +9,7 @@
 class Attack {
 	private:
 		/// debugging code switch (private)
-		static constexpr bool DBG = true;
+		static constexpr bool DBG = false;
 
 	// private data, functions
 	private:
@@ -19,8 +19,18 @@ class Attack {
 
 	// public data, functions
 	public:
-		static void initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data const& data, bool const& connectF2F);
 		static bool trial(Data const& data);
+		static void initGraph(
+				std::unordered_map<std::string, Data::Node>& nodes,
+				Data::AssignmentF2F& assignment,
+				Data const& data,
+				bool const& connectF2F
+			);
+		static void evaluate(
+				Data::AssignmentF2F const& assignment,
+				Data const& data
+			);
+
 		static bool checkGraphForCycles(Data::Node const* node);
 
 		// random-number function

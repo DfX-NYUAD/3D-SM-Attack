@@ -101,6 +101,14 @@ class Data {
 			// output pins of top
 			std::set<std::string> keys_top_to_bottom;
 		} F2F;
+
+		// the final assignments, to be populated in Attack::initGraph as well
+		struct AssignmentF2F {
+
+			std::unordered_map<std::string, std::string> bottom_to_top;
+			std::unordered_map<std::string, std::string> top_to_bottom;
+
+		};
 };
 
 #endif

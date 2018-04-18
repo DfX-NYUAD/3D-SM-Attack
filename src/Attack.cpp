@@ -29,24 +29,110 @@ int main (int argc, char** argv) {
 	// init random generator
 	std::srand(std::time(nullptr));
 
-	// one attack trial
-	std::cout << Attack::trial(data);
-	std::cout << std::endl;
+	// try attack until one mapping is found without cycles
+	unsigned trial = 1;
+	while (!Attack::trial(data)) {
+
+		std::cout << "Attack> Trial " << trial << " ..." << std::endl;
+		trial++;
+	}
 };
 
+void Attack::evaluate(Data::AssignmentF2F const& assignment, Data const& data) {
+	unsigned total_connections;
+	unsigned correct_connections;
+
+	std::cout << "Attack>" << std::endl;
+	std::cout << "Attack> Success! Found F2F assignment without cycles" << std::endl;
+	std::cout << "Attack>" << std::endl;
+	std::cout << "Attack> Reporting the F2F assignment:" << std::endl;
+	std::cout << "Attack>" << std::endl;
+
+	// evaluating the CCR: correct_connections over total_connections
+	//
+	total_connections = assignment.bottom_to_top.size() + assignment.top_to_bottom.size();
+	correct_connections = 0;
+
+	std::cout << "Attack>  Bottom to top:" << std::endl;
+	std::cout << "Attack>" << std::endl;
+	for (auto const& a : assignment.bottom_to_top) {
+
+		std::cout << "Attack>   " << a.first << " -> " << a.second;
+
+		// evaluate correct connections by name
+		//
+		// corner case: if only one assignment is possible, this is consider as correct; this is mimicked by using the same
+		// string
+		if (data.F2F.bottom_to_top.count(a.first) == 1) {
+			std::cout << " (correct)" << std::endl;
+			correct_connections++;
+		}
+		// regular case: names match
+		else if (a.second.find(a.first) != std::string::npos) {
+			std::cout << " (correct)" << std::endl;
+			correct_connections++;
+		}
+		else {
+			std::cout << " (not correct)" << std::endl;
+		}
+	}
+	std::cout << "Attack>" << std::endl;
+
+	std::cout << "Attack>  Top to bottom:" << std::endl;
+	std::cout << "Attack>" << std::endl;
+	for (auto const& a : assignment.top_to_bottom) {
+
+		std::cout << "Attack>   " << a.first << " -> " << a.second;
+
+		// evaluate correct connections by name
+		//
+		// corner case: if only one assignment is possible, this is consider as correct; this is mimicked by using the same
+		// string
+		if (data.F2F.top_to_bottom.count(a.first) == 1) {
+			std::cout << " (correct)" << std::endl;
+			correct_connections++;
+		}
+		// regular case: names match
+		else if (a.first.find(a.second) != std::string::npos) {
+			std::cout << " (correct)" << std::endl;
+
+			correct_connections++;
+		}
+		else {
+			std::cout << " (not correct)" << std::endl;
+		}
+	}
+	std::cout << "Attack>" << std::endl;
+
+	std::cout << "Attack> Correct connections: " << correct_connections << std::endl;
+	std::cout << "Attack> Total connections: " << total_connections << std::endl;
+	std::cout << "Attack> Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
+}
+
 bool Attack::trial(Data const& data) {
+	bool success;
 
 	// graph container
 	// mapping: name, node
 	std::unordered_map<std::string, Data::Node> nodes;
+	Data::AssignmentF2F assignment;
 
 	// init the graph, and also connect the F2F nodes
-	Attack::initGraph(nodes, data, true);
+	Attack::initGraph(nodes, assignment, data, true);
 
 	// check for cycles, start from global source
-	return Attack::checkGraphForCycles(
+	//
+	// returns true if cycle found; hence negate to indicate success (no cycle)
+	success = !Attack::checkGraphForCycles(
 			&(nodes[data.globalNodeNames.source])
 		);
+
+	if (success) {
+		// evaluate assignment 
+		Attack::evaluate(assignment, data);
+	}
+
+	return success;
 }
 
 bool Attack::checkGraphForCycles(Data::Node const* node) {
@@ -121,7 +207,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	return false;
 }
 
-void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data const& data, bool const& connectF2F) {
+void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, Data const& data, bool const& connectF2F) {
 
 	if (Attack::DBG) {
 		std::cout << "Attack> Initializing the graph ..." << std::endl;
@@ -258,6 +344,12 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 				&(nodes.find(input_top)->second)
 			);
 
+			// also memorize the assignment
+			assignment.bottom_to_top.insert(std::make_pair(
+						output_bottom,
+						input_top
+					));
+
 //			// dbg; pick the correct mapping based on names
 //			auto const& iter_range = data.F2F.bottom_to_top.equal_range(output_bottom);
 //			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
@@ -290,6 +382,12 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 			nodes.find(output_top)->second.children.emplace_back(
 					&(nodes.find(input_bottom)->second)
 				);
+
+			// also memorize the assignment
+			assignment.top_to_bottom.insert(std::make_pair(
+						output_top,
+						input_bottom
+					));
 
 //			// dbg; pick the correct mapping based on names
 //			auto const& iter_range = data.F2F.top_to_bottom.equal_range(output_top);

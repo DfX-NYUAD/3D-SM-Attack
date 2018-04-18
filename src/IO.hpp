@@ -10,7 +10,7 @@ class Data;
 class IO {
 	private:
 		/// debugging code switch (private)
-		static constexpr bool DBG = true;
+		static constexpr bool DBG = false;
 
 	// private data, functions
 	private:
