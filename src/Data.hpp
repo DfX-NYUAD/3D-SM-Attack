@@ -45,14 +45,17 @@ class Data {
 
 			//enum class type : unsigned {gate, input_pin, output_pin};
 
-			std::vector<Node const*> parents;
+			//std::vector<Node const*> parents;
 			std::vector<Node const*> children;
 
 			Node(
 				std::string n = "",
-				std::vector<Node const*> p = std::vector<Node const*>(),
+				//std::vector<Node const*> p = std::vector<Node const*>(),
 				std::vector<Node const*> c = std::vector<Node const*>()
-			) : name(n), parents(p), children(c) {}
+			) :
+				name(n),
+				//parents(p),
+				children(c) {}
 		};
 		// global source/sink
 		struct globalNodes {

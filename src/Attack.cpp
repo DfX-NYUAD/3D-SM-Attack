@@ -107,8 +107,8 @@ void Attack::initGraph(Data& data) {
 					Data::Node(output)
 				));
 
-		// also add primary outputs as parent for global sink
-		data.globalNodes.sink.parents.emplace_back( &(data.nodes[output]) );
+		//// also add primary outputs as parent for global sink
+		//data.globalNodes.sink.parents.emplace_back( &(data.nodes[output]) );
 	}
 
 	// add global sink/source as nodes
@@ -153,15 +153,15 @@ void Attack::initGraph(Data& data) {
 			// there's a node matching the input of the gate
 			if (node_iter != data.nodes.end()) {
 
-				// memorize the node as parent for the gate's node
-				data.nodes.find(gate.name)->second.parents.emplace_back(
-						&(node_iter->second)
-					);
-
 				// memorize the gate's node as child of the node
 				node_iter->second.children.emplace_back(
 						&(data.nodes.find(gate.name)->second)
 					);
+
+				//// memorize the node as parent for the gate's node
+				//data.nodes.find(gate.name)->second.parents.emplace_back(
+				//		&(node_iter->second)
+				//	);
 			}
 		}
 
@@ -179,10 +179,10 @@ void Attack::initGraph(Data& data) {
 						&(node_iter->second)
 					);
 
-				// memorize the gate's node as parent of the node
-				node_iter->second.parents.emplace_back(
-						&(data.nodes.find(gate.name)->second)
-					);
+				//// memorize the gate's node as parent of the node
+				//node_iter->second.parents.emplace_back(
+				//		&(data.nodes.find(gate.name)->second)
+				//	);
 			}
 		}
 	}
@@ -200,7 +200,7 @@ void Attack::initGraph(Data& data) {
 		auto const& node = node_iter.second;
 
 		edges += node.children.size();
-		edges += node.parents.size();
+		//edges += node.parents.size();
 
 		if (Attack::DBG) {
 			std::cout << "DBG>  " << node.name << ":" << std::endl;
@@ -211,11 +211,11 @@ void Attack::initGraph(Data& data) {
 			}
 			std::cout << std::endl;
 
-			std::cout << "DBG>   Parents [" << node.parents.size() << "]:";
-			for (auto const* parent : node.parents) {
-				std::cout << " " << parent->name;
-			}
-			std::cout << std::endl;
+			//std::cout << "DBG>   Parents [" << node.parents.size() << "]:";
+			//for (auto const* parent : node.parents) {
+			//	std::cout << " " << parent->name;
+			//}
+			//std::cout << std::endl;
 		}
 	}
 
