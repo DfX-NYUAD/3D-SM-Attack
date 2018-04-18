@@ -175,7 +175,9 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 
 void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data const& data) {
 
-	std::cout << "Attack> Initializing the graph ..." << std::endl;
+	if (Attack::DBG) {
+		std::cout << "Attack> Initializing the graph ..." << std::endl;
+	}
 
 	// add global sink/source as nodes
 	nodes.insert(std::make_pair(
@@ -309,42 +311,42 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 		}
 	}
 
-	// dbg log and regular log
+	// dbg log
 	//
 	if (Attack::DBG) {
 
 		std::cout << "DBG> Print all nodes: " << std::endl;
-	}
 
-	// count all edges
-	int edges = 0;
-	for (auto const& node_iter : nodes) {
-		auto const& node = node_iter.second;
+		// count all edges
+		int edges = 0;
+		for (auto const& node_iter : nodes) {
+			auto const& node = node_iter.second;
 
-		edges += node.children.size();
-		//edges += node.parents.size();
+			edges += node.children.size();
+			//edges += node.parents.size();
 
-		if (Attack::DBG) {
-			std::cout << "DBG>  " << node.name << ":" << std::endl;
+			if (Attack::DBG) {
+				std::cout << "DBG>  " << node.name << ":" << std::endl;
 
-			std::cout << "DBG>   Children [" << node.children.size() << "]:";
-			for (auto const* child : node.children) {
-				std::cout << " " << child->name;
+				std::cout << "DBG>   Children [" << node.children.size() << "]:";
+				for (auto const* child : node.children) {
+					std::cout << " " << child->name;
+				}
+				std::cout << std::endl;
+
+				//std::cout << "DBG>   Parents [" << node.parents.size() << "]:";
+				//for (auto const* parent : node.parents) {
+				//	std::cout << " " << parent->name;
+				//}
+				//std::cout << std::endl;
 			}
-			std::cout << std::endl;
-
-			//std::cout << "DBG>   Parents [" << node.parents.size() << "]:";
-			//for (auto const* parent : node.parents) {
-			//	std::cout << " " << parent->name;
-			//}
-			//std::cout << std::endl;
 		}
-	}
 
-	std::cout << "Attack> Done" << std::endl;
-	std::cout << "Attack>  Nodes: " << nodes.size() << std::endl;
-	std::cout << "Attack>  Edges: " << edges << std::endl;
-	std::cout << "Attack> " << std::endl;
+		std::cout << "Attack> Done" << std::endl;
+		std::cout << "Attack>  Nodes: " << nodes.size() << std::endl;
+		std::cout << "Attack>  Edges: " << edges << std::endl;
+		std::cout << "Attack> " << std::endl;
+	}
 }
 
 //// explore paths recursively, work on copies of paths from prior recursion level
