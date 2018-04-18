@@ -26,26 +26,9 @@ int main (int argc, char** argv) {
 	// parse the F2F mappings
 	IO::parseMappings(data);
 
-	// initialize the graph
-	//
-	// actual container
-	// mapping: name, node
-	std::unordered_map<std::string, Data::Node> nodes;
-	Attack::initGraph(nodes, data);
-//	auto nodes_copy = nodes;
-
-	// check for cycles, start from global source
-	std::cout << Attack::checkGraphForCycles(
-			&(nodes[data.globalNodeNames.source])
-		);
-
-//	std::cout << "BLUBB" << std::endl;
-//
-//	std::unordered_map<std::string, Data::Node> nodes_copy;
-//	Attack::initGraph(nodes_copy, data);
-//	Attack::checkGraphForCycles(
-//			&(nodes_copy[data.globalNodeNames.source])
-//		);
+	// one attack trial
+	std::cout << Attack::trial(data);
+	std::cout << std::endl;
 
 //	// explore all the possible driver->cross->sink paths and the related mappings
 //	Attack::determineAllPaths(data);
@@ -103,6 +86,20 @@ int main (int argc, char** argv) {
 //		}
 //	}
 };
+
+bool Attack::trial(Data const& data) {
+	// graph container
+	// mapping: name, node
+	std::unordered_map<std::string, Data::Node> nodes;
+
+	// init the graph
+	Attack::initGraph(nodes, data);
+
+	// check for cycles, start from global source
+	return Attack::checkGraphForCycles(
+			&(nodes[data.globalNodeNames.source])
+		);
+}
 
 bool Attack::checkGraphForCycles(Data::Node const* node) {
 
