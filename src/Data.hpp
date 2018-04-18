@@ -63,14 +63,11 @@ class Data {
 				//parents(p),
 				children(c) {}
 		};
-		// global source/sink
-		struct globalNodes {
-			Node source = Node("GLOBAL_SOURCE");
-			Node sink = Node("GLOBAL_SINK");
-		} globalNodes;
-		// actual container
-		// mapping: name, node
-		std::unordered_map<std::string, Node> nodes;
+		// names/identifier for global source/sink
+		struct globalNodeNames {
+			std::string source = "GLOBAL_SOURCE";
+			std::string sink = "GLOBAL_SINK";
+		} globalNodeNames;
 
 		// PODs for gates
 		struct Gate {

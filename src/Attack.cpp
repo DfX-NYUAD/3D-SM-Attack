@@ -24,10 +24,25 @@ int main (int argc, char** argv) {
 	IO::parseNetlist(data, true);
 
 	// initialize the graph
-	Attack::initGraph(data);
+	//
+	// actual container
+	// mapping: name, node
+	std::unordered_map<std::string, Data::Node> nodes;
+	Attack::initGraph(nodes, data);
+//	auto nodes_copy = nodes;
 
 	// check for cycles, start from global source
-	Attack::checkGraphForCycles(&data.globalNodes.source);
+	Attack::checkGraphForCycles(
+			&(nodes[data.globalNodeNames.source])
+		);
+
+//	std::cout << "BLUBB" << std::endl;
+//
+//	std::unordered_map<std::string, Data::Node> nodes_copy;
+//	Attack::initGraph(nodes_copy, data);
+//	Attack::checkGraphForCycles(
+//			&(nodes_copy[data.globalNodeNames.source])
+//		);
 
 //	// explore all the possible driver->cross->sink paths and the related mappings
 //	Attack::determineAllPaths(data);
@@ -158,69 +173,71 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	return false;
 }
 
-void Attack::initGraph(Data& data) {
+void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data const& data) {
 
 	std::cout << "Attack> Initializing the graph ..." << std::endl;
 
 	// add global sink/source as nodes
-	data.nodes.insert(std::make_pair(
-				data.globalNodes.source.name,
-				data.globalNodes.source
+	nodes.insert(std::make_pair(
+				data.globalNodeNames.source,
+				Data::Node(data.globalNodeNames.source)
 			));
-	data.nodes.insert(std::make_pair(
-				data.globalNodes.sink.name,
-				data.globalNodes.sink
+	nodes.insert(std::make_pair(
+				data.globalNodeNames.sink,
+				Data::Node(data.globalNodeNames.sink)
 			));
 
 	// add primary inputs as nodes
 	for (auto const& input : data.netlist.inputs_global) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					input,
 					Data::Node(input)
 				));
 
 		// also add new node for primary inputs as child to global source
-		data.globalNodes.source.children.emplace_back( &(data.nodes[input]) );
+		nodes[data.globalNodeNames.source].children.emplace_back( &(nodes[input]) );
 	}
 
 	// add primary outputs as nodes
 	for (auto const& output : data.netlist.outputs_global) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					output,
 					Data::Node(output)
 				));
 
 		// also add global sink as child for new node
-		data.nodes[output].children.emplace_back(&data.globalNodes.sink);
+		nodes[output].children.emplace_back(
+				&(nodes[data.globalNodeNames.sink])
+			);
 	}
 
 	// add F2F inputs/outputs as nodes
 	for (auto const& input : data.F2F.bottom_inputs) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					input,
 					Data::Node(input)
 				));
 	}
 	for (auto const& input : data.F2F.top_inputs) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					input,
 					Data::Node(input)
 				));
 	}
 	for (auto const& output : data.F2F.bottom_outputs) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					output,
 					Data::Node(output)
 				));
 	}
 	for (auto const& output : data.F2F.top_outputs) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					output,
 					Data::Node(output)
 				));
@@ -230,7 +247,7 @@ void Attack::initGraph(Data& data) {
 	for (auto const& gate_iter : data.netlist.gates) {
 		Data::Gate const& gate = gate_iter.second;
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					gate.name,
 					Data::Node(gate.name)
 				));
@@ -239,7 +256,7 @@ void Attack::initGraph(Data& data) {
 	// add wires as nodes
 	for (auto const& wire : data.netlist.wires) {
 
-		data.nodes.insert(std::make_pair(
+		nodes.insert(std::make_pair(
 					wire,
 					Data::Node(wire)
 				));
@@ -253,18 +270,18 @@ void Attack::initGraph(Data& data) {
 		//
 		// gate.inputs: cell pin is key, pin/net name is value
 		for (auto const& input_iter : gate.inputs) {
-			auto const& node_iter = data.nodes.find(input_iter.second);
+			auto const& node_iter = nodes.find(input_iter.second);
 
 			// there's a node matching the input of the gate
-			if (node_iter != data.nodes.end()) {
+			if (node_iter != nodes.end()) {
 
 				// memorize the gate's node as child of the node
 				node_iter->second.children.emplace_back(
-						&(data.nodes.find(gate.name)->second)
+						&(nodes.find(gate.name)->second)
 					);
 
 				//// memorize the node as parent for the gate's node
-				//data.nodes.find(gate.name)->second.parents.emplace_back(
+				//nodes.find(gate.name)->second.parents.emplace_back(
 				//		&(node_iter->second)
 				//	);
 			}
@@ -274,19 +291,19 @@ void Attack::initGraph(Data& data) {
 		//
 		// gate.outputs: cell pin is key, pin/net name is value
 		for (auto const& output_iter : gate.outputs) {
-			auto const& node_iter = data.nodes.find(output_iter.second);
+			auto const& node_iter = nodes.find(output_iter.second);
 
 			// there's a node matching the output of the gate
-			if (node_iter != data.nodes.end()) {
+			if (node_iter != nodes.end()) {
 
 				// memorize the node as child for the gate's node
-				data.nodes.find(gate.name)->second.children.emplace_back(
+				nodes.find(gate.name)->second.children.emplace_back(
 						&(node_iter->second)
 					);
 
 				//// memorize the gate's node as parent of the node
 				//node_iter->second.parents.emplace_back(
-				//		&(data.nodes.find(gate.name)->second)
+				//		&(nodes.find(gate.name)->second)
 				//	);
 			}
 		}
@@ -301,7 +318,7 @@ void Attack::initGraph(Data& data) {
 
 	// count all edges
 	int edges = 0;
-	for (auto const& node_iter : data.nodes) {
+	for (auto const& node_iter : nodes) {
 		auto const& node = node_iter.second;
 
 		edges += node.children.size();
@@ -325,7 +342,7 @@ void Attack::initGraph(Data& data) {
 	}
 
 	std::cout << "Attack> Done" << std::endl;
-	std::cout << "Attack>  Nodes: " << data.nodes.size() << std::endl;
+	std::cout << "Attack>  Nodes: " << nodes.size() << std::endl;
 	std::cout << "Attack>  Edges: " << edges << std::endl;
 	std::cout << "Attack> " << std::endl;
 }
