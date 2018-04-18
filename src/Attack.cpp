@@ -90,12 +90,9 @@ void Attack::initGraph(Data& data) {
 	// add primary inputs as nodes
 	for (auto const& input : data.netlist.inputs_global) {
 
-		Data::Node new_node;
-		new_node.name = input;
-
 		data.nodes.insert(std::make_pair(
-					new_node.name,
-					new_node
+					input,
+					Data::Node(input)
 				));
 
 		// also add new node for primary inputs as child to global source
