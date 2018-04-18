@@ -140,7 +140,7 @@ void Attack::initGraph(Data& data) {
 				));
 	}
 
-	// TODO connect graph based on connectivity of gates
+	// connect graph based on connectivity of gates
 	for (auto const& gate_iter : data.netlist.gates) {
 		Data::Gate const& gate = gate_iter.second;
 
@@ -180,15 +180,12 @@ void Attack::initGraph(Data& data) {
 					);
 
 				// memorize the gate's node as parent of the node
-				node_iter->second.children.emplace_back(
+				node_iter->second.parents.emplace_back(
 						&(data.nodes.find(gate.name)->second)
 					);
 			}
 		}
 	}
-
-	// TODO derive all inputs for primary outputs
-	// TODO derive all outputs for primary inputs
 
 	// dbg log and regular log
 	//
