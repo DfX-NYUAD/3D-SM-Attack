@@ -162,6 +162,16 @@ void Attack::initGraph(Data& data) {
 
 	std::cout << "Attack> Initializing the graph ..." << std::endl;
 
+	// add global sink/source as nodes
+	data.nodes.insert(std::make_pair(
+				data.globalNodes.source.name,
+				data.globalNodes.source
+			));
+	data.nodes.insert(std::make_pair(
+				data.globalNodes.sink.name,
+				data.globalNodes.sink
+			));
+
 	// add primary inputs as nodes
 	for (auto const& input : data.netlist.inputs_global) {
 
@@ -182,19 +192,39 @@ void Attack::initGraph(Data& data) {
 					Data::Node(output)
 				));
 
-		//// also add primary outputs as parent for global sink
-		//data.globalNodes.sink.parents.emplace_back( &(data.nodes[output]) );
+		// also add global sink as child for new node
+		data.nodes[output].children.emplace_back(&data.globalNodes.sink);
 	}
 
-	// add global sink/source as nodes
-	data.nodes.insert(std::make_pair(
-				data.globalNodes.source.name,
-				data.globalNodes.source
-			));
-	data.nodes.insert(std::make_pair(
-				data.globalNodes.sink.name,
-				data.globalNodes.sink
-			));
+	// add F2F inputs/outputs as nodes
+	for (auto const& input : data.F2F.bottom_inputs) {
+
+		data.nodes.insert(std::make_pair(
+					input,
+					Data::Node(input)
+				));
+	}
+	for (auto const& input : data.F2F.top_inputs) {
+
+		data.nodes.insert(std::make_pair(
+					input,
+					Data::Node(input)
+				));
+	}
+	for (auto const& output : data.F2F.bottom_outputs) {
+
+		data.nodes.insert(std::make_pair(
+					output,
+					Data::Node(output)
+				));
+	}
+	for (auto const& output : data.F2F.top_outputs) {
+
+		data.nodes.insert(std::make_pair(
+					output,
+					Data::Node(output)
+				));
+	}
 
 	// add gates as nodes
 	for (auto const& gate_iter : data.netlist.gates) {
