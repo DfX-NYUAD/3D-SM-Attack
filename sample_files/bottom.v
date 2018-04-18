@@ -221,35 +221,35 @@ module bottom (
    output g36996_A1;
 
    // Internal wires
-   wire n_109;
-   wire n_156;
-   wire n_157;
-   wire n_158;
-   wire n_159;
-   wire n_160;
-   wire n_161;
-   wire n_162;
-   wire n_163;
-   wire n_164;
-   wire n_165;
-   wire n_166;
-   wire n_167;
-   wire n_168;
-   wire n_169;
-   wire n_170;
-   wire n_171;
-   wire n_172;
-   wire n_173;
-   wire n_174;
+   wire bottom_n_109;
+   wire bottom_n_156;
+   wire bottom_n_157;
+   wire bottom_n_158;
+   wire bottom_n_159;
+   wire bottom_n_160;
+   wire bottom_n_161;
+   wire bottom_n_162;
+   wire bottom_n_163;
+   wire bottom_n_164;
+   wire bottom_n_165;
+   wire bottom_n_166;
+   wire bottom_n_167;
+   wire bottom_n_168;
+   wire bottom_n_169;
+   wire bottom_n_170;
+   wire bottom_n_171;
+   wire bottom_n_172;
+   wire bottom_n_173;
+   wire bottom_n_174;
 
    AOI221_X1 g36998 (.A(g37004_ZN),
 	.B1(g37000_A1),
-	.B2(n_109),
+	.B2(bottom_n_109),
 	.C1(g37000_A1),
 	.C2(g37017_ZN),
 	.ZN(g36997_A));
    NOR4_X1 g37003 (.A1(g37013_A),
-	.A2(n_109),
+	.A2(bottom_n_109),
 	.A3(g37005_A2),
 	.A4(G108GAT),
 	.ZN(g36995_B2));
@@ -261,7 +261,7 @@ module bottom (
 	.ZN(g37000_A1));
    AND2_X1 g37009 (.A1(g37018_ZN),
 	.A2(g37028_ZN),
-	.ZN(n_109));
+	.ZN(bottom_n_109));
    INV_X1 g37016 (.A(g37017_ZN),
 	.ZN(g37002_A2));
    AOI221_X1 g37014 (.A(g37060_ZN),
@@ -270,7 +270,7 @@ module bottom (
 	.C1(G370GAT),
 	.C2(G105GAT),
 	.ZN(g37013_A));
-   AOI221_X1 g37015 (.A(n_156),
+   AOI221_X1 g37015 (.A(bottom_n_156),
 	.B1(G329GAT),
 	.B2(G21GAT),
 	.C1(G370GAT),
@@ -281,18 +281,18 @@ module bottom (
 	.ZN(g37019_A));
    NAND4_X1 g37021 (.A1(g37031_ZN),
 	.A2(g37027_ZN),
-	.A3(n_157),
-	.A4(n_158),
+	.A3(bottom_n_157),
+	.A4(bottom_n_158),
 	.ZN(G370GAT));
    OAI21_X1 g37022 (.A(g37026_ZN),
 	.B1(g37040_ZN),
-	.B2(n_159),
-	.ZN(n_157));
+	.B2(bottom_n_159),
+	.ZN(bottom_n_157));
    OR3_X1 g37025 (.A1(g37033_ZN),
 	.A2(g37041_ZN),
-	.A3(n_160),
-	.ZN(n_158));
-   AOI21_X1 g37030 (.A(n_161),
+	.A3(bottom_n_160),
+	.ZN(bottom_n_158));
+   AOI21_X1 g37030 (.A(bottom_n_161),
 	.B1(G329GAT),
 	.B2(G47GAT),
 	.ZN(g37029_A));
@@ -301,41 +301,41 @@ module bottom (
 	.ZN(g37027_A1));
    AOI22_X1 g37036 (.A1(g37051_ZN),
 	.A2(g37085_B1),
-	.B1(n_162),
+	.B1(bottom_n_162),
 	.B2(g37068_ZN),
 	.ZN(g37031_A2));
    NAND2_X1 g37035 (.A1(g37044_ZN),
-	.A2(n_163),
+	.A2(bottom_n_163),
 	.ZN(G329GAT));
-   OAI221_X1 g37038 (.A(n_164),
-	.B1(n_165),
+   OAI221_X1 g37038 (.A(bottom_n_164),
+	.B1(bottom_n_165),
 	.B2(G27GAT),
 	.C1(g37044_A1),
 	.C2(G79GAT),
 	.ZN(g37037_A));
    AOI21_X1 g37039 (.A(g37033_A2),
 	.B1(g37068_ZN),
-	.B2(n_165),
-	.ZN(n_160));
+	.B2(bottom_n_165),
+	.ZN(bottom_n_160));
    NAND2_X1 g37048 (.A1(g37041_A2),
 	.A2(g37041_A3),
 	.ZN(g37033_B2));
    INV_X1 g37049 (.A(g37050_ZN),
-	.ZN(n_162));
-   OAI22_X1 g37042 (.A1(n_156),
+	.ZN(bottom_n_162));
+   OAI22_X1 g37042 (.A1(bottom_n_156),
 	.A2(G27GAT),
 	.B1(g37080_ZN),
 	.B2(g37095_ZN),
-	.ZN(n_159));
+	.ZN(bottom_n_159));
    AND4_X1 g37043 (.A1(g37068_ZN),
-	.A2(n_166),
+	.A2(bottom_n_166),
 	.A3(g37041_A3),
-	.A4(n_165),
-	.ZN(n_163));
+	.A4(bottom_n_165),
+	.ZN(bottom_n_163));
    NOR2_X1 g37045 (.A1(g37053_ZN),
 	.A2(G40GAT),
 	.ZN(g37041_A1));
-   NAND2_X1 g37046 (.A1(n_166),
+   NAND2_X1 g37046 (.A1(bottom_n_166),
 	.A2(g37041_A3),
 	.ZN(g37033_A2));
    NOR2_X1 g37047 (.A1(g37012_A),
@@ -344,10 +344,10 @@ module bottom (
    OR3_X1 g37052 (.A1(g37080_ZN),
 	.A2(g37095_ZN),
 	.A3(g37093_ZN),
-	.ZN(n_164));
+	.ZN(bottom_n_164));
    INV_X1 g37062 (.A(g37051_A1),
 	.ZN(g37031_B2));
-   INV_X1 g37063 (.A(n_166),
+   INV_X1 g37063 (.A(bottom_n_166),
 	.ZN(g37041_A2));
    NAND2_X1 g37054 (.A1(g37078_ZN),
 	.A2(G4GAT),
@@ -360,20 +360,20 @@ module bottom (
 	.ZN(g37028_A));
    NAND2_X1 g37057 (.A1(g37080_A),
 	.A2(G43GAT),
-	.ZN(n_161));
-   NAND2_X1 g37058 (.A1(n_167),
+	.ZN(bottom_n_161));
+   NAND2_X1 g37058 (.A1(bottom_n_167),
 	.A2(G17GAT),
-	.ZN(n_156));
+	.ZN(bottom_n_156));
    NAND3_X1 g37061 (.A1(g37074_ZN),
-	.A2(n_168),
+	.A2(bottom_n_168),
 	.A3(G69GAT),
 	.ZN(g37044_A1));
-   NAND3_X1 g37064 (.A1(n_167),
-	.A2(n_169),
+   NAND3_X1 g37064 (.A1(bottom_n_167),
+	.A2(bottom_n_169),
 	.A3(G17GAT),
-	.ZN(n_165));
+	.ZN(bottom_n_165));
    NAND3_X1 g37066 (.A1(g37068_A1),
-	.A2(n_170),
+	.A2(bottom_n_170),
 	.A3(G108GAT),
 	.ZN(g37051_A1));
    NAND3_X1 g37067 (.A1(g37075_ZN),
@@ -381,14 +381,14 @@ module bottom (
 	.A3(G30GAT),
 	.ZN(g37041_A3));
    NAND3_X1 g37069 (.A1(g37078_ZN),
-	.A2(n_171),
+	.A2(bottom_n_171),
 	.A3(G4GAT),
-	.ZN(n_166));
+	.ZN(bottom_n_166));
    NAND3_X1 g37070 (.A1(g37065_A1),
 	.A2(g37099_ZN),
 	.A3(G56GAT),
 	.ZN(g37044_A3));
-   OAI21_X1 g37072 (.A(n_172),
+   OAI21_X1 g37072 (.A(bottom_n_172),
 	.B1(g37083_ZN),
 	.B2(g37085_ZN),
 	.ZN(g37044_A4));
@@ -397,7 +397,7 @@ module bottom (
 	.ZN(g37071_A1));
    NAND2_X1 g37076 (.A1(g37084_ZN),
 	.A2(G11GAT),
-	.ZN(n_167));
+	.ZN(bottom_n_167));
    NAND2_X1 g37081 (.A1(g37084_ZN),
 	.A2(G37GAT),
 	.ZN(g37080_A));
@@ -410,38 +410,38 @@ module bottom (
    OAI221_X1 g37087 (.A(g37090_ZN),
 	.B1(g37097_ZN),
 	.B2(G37GAT),
-	.C1(n_173),
+	.C1(bottom_n_173),
 	.C2(G24GAT),
 	.ZN(g37086_A1));
    NAND2_X1 g37089 (.A1(g37093_ZN),
 	.A2(g37085_B1),
-	.ZN(n_172));
+	.ZN(bottom_n_172));
    AOI22_X1 g37091 (.A1(g37113_ZN),
 	.A2(G108GAT),
-	.B1(n_174),
+	.B1(bottom_n_174),
 	.B2(G82GAT),
 	.ZN(g37084_B));
    OR2_X1 g37094 (.A1(g37084_C1),
 	.A2(G99GAT),
 	.ZN(g37085_B1));
    INV_X1 g37112 (.A(G115GAT),
-	.ZN(n_170));
+	.ZN(bottom_n_170));
    INV_X1 g37108 (.A(G8GAT),
-	.ZN(n_171));
+	.ZN(bottom_n_171));
    INV_X1 g37111 (.A(G69GAT),
 	.ZN(g37092_A1));
    INV_X1 g37115 (.A(G73GAT),
-	.ZN(n_168));
+	.ZN(bottom_n_168));
    INV_X1 g37107 (.A(G30GAT),
-	.ZN(n_173));
+	.ZN(bottom_n_173));
    INV_X1 g37096 (.A(G21GAT),
-	.ZN(n_169));
+	.ZN(bottom_n_169));
    INV_X1 g37110 (.A(G86GAT),
 	.ZN(g37071_A2));
    INV_X1 g37103 (.A(G95GAT),
 	.ZN(g37084_C1));
    INV_X1 g37104 (.A(G76GAT),
-	.ZN(n_174));
+	.ZN(bottom_n_174));
    INV_X1 g37101 (.A(G92GAT),
 	.ZN(g37027_A3));
    INV_X1 g37105 (.A(G11GAT),
