@@ -43,17 +43,23 @@ class Data {
 			// name of gate or pin
 			std::string name;
 
-			//enum class type : unsigned {gate, input_pin, output_pin};
+			//enum class type_enum : unsigned {gate, input_global, output_global};
+			//type_enum type;
 
 			//std::vector<Node const*> parents;
 			std::vector<Node const*> children;
 
+			mutable bool visited = false;
+			mutable bool recursion = false;
+
 			Node(
 				std::string n = "",
+				//type_enum type,
 				//std::vector<Node const*> p = std::vector<Node const*>(),
 				std::vector<Node const*> c = std::vector<Node const*>()
 			) :
 				name(n),
+				//type(t),
 				//parents(p),
 				children(c) {}
 		};

@@ -26,6 +26,9 @@ int main (int argc, char** argv) {
 	// initialize the graph
 	Attack::initGraph(data);
 
+	// check for cycles, start from global source
+	Attack::checkGraphForCycles(&data.globalNodes.source);
+
 //	// explore all the possible driver->cross->sink paths and the related mappings
 //	Attack::determineAllPaths(data);
 //
@@ -82,6 +85,78 @@ int main (int argc, char** argv) {
 //		}
 //	}
 };
+
+bool Attack::checkGraphForCycles(Data::Node const* node) {
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Check graph for cycles; consider node: " << node->name << std::endl;
+	}
+
+	// node not visited/checked yet
+	//
+	if (!node->visited) {
+
+		if (Attack::DBG) {
+			std::cout << "DBG>  Proceed with node " << node->name <<";";
+			std::cout << " not visited yet; mark as visited and as part of recursion" << std::endl;
+		}
+
+		// mark as visited/checked, and also mark as part of this recursion
+		node->visited = node->recursion = true;
+
+		// now, check all children in depth-first manner
+		//
+		for (unsigned c = 0; c < node->children.size(); c++) {
+			auto const* child = node->children[c];
+
+			if (Attack::DBG) {
+				std::cout << "DBG>   Consider node " << node->name << "'s child: " << child->name;
+				std::cout << "; child " << c + 1 << "/" << node->children.size() << std::endl;
+			}
+
+			// child not visited yet; check recursively whether some cycle can be found
+			//
+			if (!child->visited && Attack::checkGraphForCycles(child)) {
+
+				if (Attack::DBG) {
+					std::cout << "DBG> Return from recursive check of node " << node->name << "'s child: " << child->name;
+					std::cout << "; a cycle was found ..." << std::endl;
+				}
+
+				return true;
+			}
+			// child already visited; in case it has been visited during the current recursive call, then we found a cycle/backedge
+			// http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
+			//
+			else if (child->recursion) {
+
+				if (Attack::DBG) {
+					std::cout << "DBG>   Cycle found; passed this node " << child->name << " already during recursion" << std::endl;
+				}
+
+				return true;
+			}
+			// child already visited, but not part of the recursion anymore; represents a transitive edge from one parent node
+			// to some child node, which is fine
+			// 
+			else {
+				if (Attack::DBG) {
+					std::cout << "DBG>   Cleared node " << node->name << "'s child: " << child->name;
+					std::cout << "; child " << c + 1 << "/" << node->children.size() << std::endl;
+				}
+			}
+		}
+	}
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Check graph for cycles; DONE consider node: " << node->name << std::endl;
+	}
+
+	// after return from recursion; mark as "not anymore part of a recursion"
+	node->recursion = false;
+
+	return false;
+}
 
 void Attack::initGraph(Data& data) {
 
