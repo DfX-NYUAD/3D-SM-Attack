@@ -32,11 +32,11 @@ OPT := $(OPT) -std=c++11
 # 32bit binary
 #OPT := $(OPT) -m32
 ## debug symbols
-OPT := $(OPT) -g -D_GLIBCXX_DEBUG
-## Runtime Optimization
-#OPT := $(OPT) -O3
-## native tuning, since gcc 4.2
-#OPT := $(OPT) -march=native
+#OPT := $(OPT) -g -D_GLIBCXX_DEBUG
+# Runtime Optimization
+OPT := $(OPT) -O3
+# native tuning, since gcc 4.2
+OPT := $(OPT) -march=native
 
 #=============================================================================#
 # Variables:
