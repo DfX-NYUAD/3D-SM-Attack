@@ -26,6 +26,9 @@ int main (int argc, char** argv) {
 	// parse the F2F mappings
 	IO::parseMappings(data);
 
+	// init random generator
+	std::srand(std::time(nullptr));
+
 	// one attack trial
 	std::cout << Attack::trial(data);
 	std::cout << std::endl;
@@ -88,12 +91,13 @@ int main (int argc, char** argv) {
 };
 
 bool Attack::trial(Data const& data) {
+
 	// graph container
 	// mapping: name, node
 	std::unordered_map<std::string, Data::Node> nodes;
 
-	// init the graph
-	Attack::initGraph(nodes, data);
+	// init the graph, and also connect the F2F nodes
+	Attack::initGraph(nodes, data, true);
 
 	// check for cycles, start from global source
 	return Attack::checkGraphForCycles(
@@ -173,7 +177,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	return false;
 }
 
-void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data const& data) {
+void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data const& data, bool const& connectF2F) {
 
 	if (Attack::DBG) {
 		std::cout << "Attack> Initializing the graph ..." << std::endl;
@@ -198,7 +202,14 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 				));
 
 		// also add new node for primary inputs as child to global source
-		nodes[data.globalNodeNames.source].children.emplace_back( &(nodes[input]) );
+		//
+		// avoid F2F inputs as much as possible, which have "_" in name
+		// note that some F2F inputs are PIs, so they will not avoided here; also note that avoiding F2F here only saves some
+		// runtime (fewer children to be checked), but it does not undermine the checking for cycles
+		//
+		if (input.find("_") == std::string::npos) {
+			nodes[data.globalNodeNames.source].children.emplace_back( &(nodes[input]) );
+		}
 	}
 
 	// add outputs as nodes, covers both PO and F2F outputs
@@ -210,9 +221,16 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 				));
 
 		// also add global sink as child for new node
-		nodes[output].children.emplace_back(
-				&(nodes[data.globalNodeNames.sink])
-			);
+		//
+		// avoid F2F outputs as much as possible, which have "_" in name
+		// note that some F2F outputs are POs, so they will not avoided here; also note that avoiding F2F here only saves some
+		// runtime (fewer children to be checked), but it does not undermine the checking for cycles
+		//
+		if (output.find("_") == std::string::npos) {
+			nodes[output].children.emplace_back(
+					&(nodes[data.globalNodeNames.sink])
+				);
+		}
 	}
 
 	// add gates as nodes
@@ -278,6 +296,76 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 				//		&(nodes.find(gate.name)->second)
 				//	);
 			}
+		}
+	}
+
+	// connect also F2F nodes, if desired
+	if (connectF2F) {
+
+		// connect bottom-to-top nodes
+		for (auto const& output_bottom : data.F2F.keys_bottom_to_top) {
+
+			// pick one randomly
+			auto const& random = Attack::rand(0, data.F2F.bottom_to_top.count(output_bottom) - 1);
+			auto const& input_top = std::next(data.F2F.bottom_to_top.equal_range(output_bottom).first, random)->second;
+
+			// memorize the picked node as child for the output node
+			nodes.find(output_bottom)->second.children.emplace_back(
+				&(nodes.find(input_top)->second)
+			);
+
+//			// dbg; pick the correct mapping based on names
+//			auto const& iter_range = data.F2F.bottom_to_top.equal_range(output_bottom);
+//			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
+//
+//				auto const& input_top = (*iter).second;
+//
+//				// dbg; pick the correct mapping based on names
+//				if (input_top.find(output_bottom) == std::string::npos) {
+//					continue;
+//				}
+//
+//				std::cout << "output_bottom: " << output_bottom << std::endl;
+//				std::cout << "    input_top: " << input_top << std::endl;
+//
+//				// memorize the picked node as child for the output node
+//				nodes.find(output_bottom)->second.children.emplace_back(
+//					&(nodes.find(input_top)->second)
+//				);
+//			}
+		}
+
+		// connect top-to-bottom nodes
+		for (auto const& output_top : data.F2F.keys_top_to_bottom) {
+
+			// pick one randomly
+			auto const& random = Attack::rand(0, data.F2F.top_to_bottom.count(output_top) - 1);
+			auto const& input_bottom = std::next(data.F2F.top_to_bottom.equal_range(output_top).first, random)->second;
+
+			// memorize the picked node as child for the output node
+			nodes.find(output_top)->second.children.emplace_back(
+					&(nodes.find(input_bottom)->second)
+				);
+
+//			// dbg; pick the correct mapping based on names
+//			auto const& iter_range = data.F2F.top_to_bottom.equal_range(output_top);
+//			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
+//
+//				auto const& input_bottom = (*iter).second;
+//
+//				// dbg; pick the correct mapping based on names
+//				if (input_bottom.find(output_top) == std::string::npos) {
+//					continue;
+//				}
+//
+//				std::cout << "  output_top: " << output_top << std::endl;
+//				std::cout << "input_bottom: " << input_bottom << std::endl;
+//
+//				// memorize the picked node as child for the output node
+//				nodes.find(output_top)->second.children.emplace_back(
+//						&(nodes.find(input_bottom)->second)
+//					);
+//			}
 		}
 	}
 
