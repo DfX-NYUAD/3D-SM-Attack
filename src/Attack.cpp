@@ -23,6 +23,9 @@ int main (int argc, char** argv) {
 	// parse top tier netlist
 	IO::parseNetlist(data, true);
 
+	// parse the F2F mappings
+	IO::parseMappings(data);
+
 	// initialize the graph
 	//
 	// actual container
@@ -32,7 +35,7 @@ int main (int argc, char** argv) {
 //	auto nodes_copy = nodes;
 
 	// check for cycles, start from global source
-	Attack::checkGraphForCycles(
+	std::cout << Attack::checkGraphForCycles(
 			&(nodes[data.globalNodeNames.source])
 		);
 
@@ -189,8 +192,8 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 				Data::Node(data.globalNodeNames.sink)
 			));
 
-	// add primary inputs as nodes
-	for (auto const& input : data.netlist.inputs_global) {
+	// add inputs as nodes, covers both PI and F2F inputs
+	for (auto const& input : data.netlist.inputs) {
 
 		nodes.insert(std::make_pair(
 					input,
@@ -201,8 +204,8 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 		nodes[data.globalNodeNames.source].children.emplace_back( &(nodes[input]) );
 	}
 
-	// add primary outputs as nodes
-	for (auto const& output : data.netlist.outputs_global) {
+	// add outputs as nodes, covers both PO and F2F outputs
+	for (auto const& output : data.netlist.outputs) {
 
 		nodes.insert(std::make_pair(
 					output,
@@ -213,36 +216,6 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data 
 		nodes[output].children.emplace_back(
 				&(nodes[data.globalNodeNames.sink])
 			);
-	}
-
-	// add F2F inputs/outputs as nodes
-	for (auto const& input : data.F2F.bottom_inputs) {
-
-		nodes.insert(std::make_pair(
-					input,
-					Data::Node(input)
-				));
-	}
-	for (auto const& input : data.F2F.top_inputs) {
-
-		nodes.insert(std::make_pair(
-					input,
-					Data::Node(input)
-				));
-	}
-	for (auto const& output : data.F2F.bottom_outputs) {
-
-		nodes.insert(std::make_pair(
-					output,
-					Data::Node(output)
-				));
-	}
-	for (auto const& output : data.F2F.top_outputs) {
-
-		nodes.insert(std::make_pair(
-					output,
-					Data::Node(output)
-				));
 	}
 
 	// add gates as nodes

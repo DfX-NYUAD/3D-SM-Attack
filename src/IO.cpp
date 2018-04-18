@@ -46,6 +46,88 @@ void IO::testFile(std::string const& file) {
 	in.close();
 }
 
+void IO::parseMappings(Data& data) {
+	std::ifstream in;
+	std::string line;
+	std::string tmpstr;
+	std::string output_tuple;
+	std::string output;
+
+	in.open(data.files.obfuscated_mappings.c_str());
+
+	std::cout << "IO> Parsing the obfuscated F2F mappings ...";
+	std::cout << std::endl;
+
+	while (std::getline(in, line)) {
+
+		//Data::Cell cell;
+		std::istringstream linestream(line);
+
+		// first is output
+		linestream >> output_tuple;
+		// name of output pin
+		output = output_tuple.substr(output_tuple.find("/") + 1);
+
+		// second is " : "; drop
+		linestream >> tmpstr;
+
+		// then, any number of input pins to map to can follow
+		//
+		// differentiate between bottom-to-top and top-to bottom mappings
+		//
+		// bottom-to-top
+		if (output_tuple.find("bottom/") != std::string::npos) {
+
+			while (!linestream.eof()) {
+
+				linestream >> tmpstr;
+
+				data.F2F.bottom_to_top.insert(std::make_pair(
+							output,
+							// name of input pin, without prefix
+							tmpstr.substr(tmpstr.find("/") + 1)
+						));
+			}
+		}
+		else {
+			while (!linestream.eof()) {
+
+				linestream >> tmpstr;
+
+				data.F2F.top_to_bottom.insert(std::make_pair(
+							output,
+							// name of input pin, without prefix
+							tmpstr.substr(tmpstr.find("/") + 1)
+						));
+			}
+		}
+	}
+
+	// dbg log of parsed tuples
+	//
+	if (IO::DBG) {
+
+		std::cout << "IO_DBG> Print all mappings for bottom_to_top: " << std::endl;
+
+		for (auto const& mapping : data.F2F.bottom_to_top) {
+
+			std::cout << "IO_DBG>  " << mapping.first << " : " << mapping.second << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all mappings for top_to_bottom: " << std::endl;
+
+		for (auto const& mapping : data.F2F.top_to_bottom) {
+
+			std::cout << "IO_DBG>  " << mapping.first << " : " << mapping.second << std::endl;
+		}
+	}
+
+	std::cout << "IO> Done" << std::endl;
+	std::cout << "IO>  Mappings from bottom to top: " << data.F2F.bottom_to_top.size() << std::endl;
+	std::cout << "IO>  Mappings from top to bottom: " << data.F2F.top_to_bottom.size() << std::endl;
+	std::cout << "IO> " << std::endl;
+}
+
 void IO::parseCells(Data& data, bool const& outputs) {
 	std::ifstream in;
 	std::string line;
@@ -186,22 +268,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			linestream >> tmpstr;
 			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
-			// differentiate between global inputs and F2F inputs; the latter have an "_" in the name
-			// 
-			// F2F input
-			if (tmpstr.find("_") != std::string::npos) {
-
-				if (top_tier) {
-					data.F2F.top_inputs.emplace_back(tmpstr);
-				}
-				else {
-					data.F2F.bottom_inputs.emplace_back(tmpstr);
-				}
-			}
-			// global input
-			else {
-				data.netlist.inputs_global.insert(tmpstr);
-			}
+			data.netlist.inputs.insert(tmpstr);
 		}
 	}
 	
@@ -228,22 +295,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			linestream >> tmpstr;
 			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
-			// differentiate between global outputs and F2F outputs; the latter have an "_" in the name
-			// 
-			// F2F output
-			if (tmpstr.find("_") != std::string::npos) {
-
-				if (top_tier) {
-					data.F2F.top_outputs.emplace_back(tmpstr);
-				}
-				else {
-					data.F2F.bottom_outputs.emplace_back(tmpstr);
-				}
-			}
-			// global output
-			else {
-				data.netlist.outputs_global.insert(tmpstr);
-			}
+			data.netlist.outputs.insert(tmpstr);
 		}
 	}
 	
@@ -374,51 +426,19 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	//
 	if (IO::DBG) {
 
-		std::cout << "IO_DBG> Print all inputs_global: " << std::endl;
+		std::cout << "IO_DBG> Print all inputs: " << std::endl;
 
-		for (auto const& input : data.netlist.inputs_global) {
-
-			std::cout << "IO_DBG>  " << input;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all outputs_global: " << std::endl;
-
-		for (auto const& output : data.netlist.outputs_global) {
-
-			std::cout << "IO_DBG>  " << output;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all bottom_outputs: " << std::endl;
-
-		for (auto const& output : data.F2F.bottom_outputs) {
-
-			std::cout << "IO_DBG>  " << output;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all top_inputs: " << std::endl;
-
-		for (auto const& input : data.F2F.top_inputs) {
+		for (auto const& input : data.netlist.inputs) {
 
 			std::cout << "IO_DBG>  " << input;
 			std::cout << std::endl;
 		}
 
-		std::cout << "IO_DBG> Print all top_outputs: " << std::endl;
+		std::cout << "IO_DBG> Print all outputs: " << std::endl;
 
-		for (auto const& output : data.F2F.top_outputs) {
+		for (auto const& output : data.netlist.outputs) {
 
 			std::cout << "IO_DBG>  " << output;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all bottom_inputs: " << std::endl;
-
-		for (auto const& input : data.F2F.bottom_inputs) {
-
-			std::cout << "IO_DBG>  " << input;
 			std::cout << std::endl;
 		}
 
@@ -453,12 +473,8 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	}
 
 	std::cout << "IO> Done" << std::endl;
-	std::cout << "IO>  Global inputs: " << data.netlist.inputs_global.size() << std::endl;
-	std::cout << "IO>  Global outputs: " << data.netlist.outputs_global.size() << std::endl;
-	std::cout << "IO>  Bottom F2F inputs: " << data.F2F.bottom_inputs.size() << std::endl;
-	std::cout << "IO>  Bottom F2F outputs: " << data.F2F.bottom_outputs.size() << std::endl;
-	std::cout << "IO>  Top F2F inputs: " << data.F2F.top_inputs.size() << std::endl;
-	std::cout << "IO>  Top F2F outputs: " << data.F2F.top_outputs.size() << std::endl;
+	std::cout << "IO>  Inputs (both PI and F2F): " << data.netlist.inputs.size() << std::endl;
+	std::cout << "IO>  Outputs (both PO and F2F): " << data.netlist.outputs.size() << std::endl;
 	std::cout << "IO>  Wires: " << data.netlist.wires.size() << std::endl;
 	std::cout << "IO>  Gates: " << data.netlist.gates.size() << std::endl;
 	std::cout << "IO> " << std::endl;

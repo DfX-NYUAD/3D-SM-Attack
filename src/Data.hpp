@@ -43,7 +43,7 @@ class Data {
 			// name of gate or pin
 			std::string name;
 
-			//enum class type_enum : unsigned {gate, input_global, output_global};
+			//enum class type_enum : unsigned {gate, input, output};
 			//type_enum type;
 
 			//std::vector<Node const*> parents;
@@ -81,8 +81,8 @@ class Data {
 		// PODs for netlists
 		struct Netlist {
 			// I/Os can definitely be redundant in top/bottom tier, so we use a std::set here to avoid duplicates
-			std::set<std::string> inputs_global;
-			std::set<std::string> outputs_global;
+			std::set<std::string> inputs;
+			std::set<std::string> outputs;
 			// wires may be redundant in top/bottom tier, so we also use a std::set here
 			std::set<std::string> wires;
 			// gates should not redundant; for better access, use map
@@ -91,10 +91,8 @@ class Data {
 		
 		// PODs for F2F vias/pins
 		struct F2F {
-			std::vector<std::string> bottom_inputs;
-			std::vector<std::string> bottom_outputs;
-			std::vector<std::string> top_inputs;
-			std::vector<std::string> top_outputs;
+			std::unordered_multimap<std::string, std::string> bottom_to_top;
+			std::unordered_multimap<std::string, std::string> top_to_bottom;
 		} F2F;
 };
 

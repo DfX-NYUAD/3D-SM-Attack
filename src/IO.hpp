@@ -10,7 +10,7 @@ class Data;
 class IO {
 	private:
 		/// debugging code switch (private)
-		static constexpr bool DBG = false;
+		static constexpr bool DBG = true;
 
 	// private data, functions
 	private:
@@ -27,6 +27,7 @@ class IO {
 		static void parseParametersFiles(Data& data, int const& argc, char** argv);
 		static void parseCells(Data& data, bool const& outputs);
 		static void parseNetlist(Data& data, bool const& top_tier);
+		static void parseMappings(Data& data);
 };
 
 #endif
