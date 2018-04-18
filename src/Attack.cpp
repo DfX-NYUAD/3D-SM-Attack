@@ -131,9 +131,64 @@ void Attack::initGraph(Data& data) {
 				));
 	}
 
-	//// TODO connect graph based on connectivity of gates
-	//for (auto const& gate : data.netlist.gates) {
-	//}
+	// add wires as nodes
+	for (auto const& wire : data.netlist.wires) {
+
+		data.nodes.insert(std::make_pair(
+					wire,
+					Data::Node(wire)
+				));
+	}
+
+	// TODO connect graph based on connectivity of gates
+	for (auto const& gate_iter : data.netlist.gates) {
+		Data::Gate const& gate = gate_iter.second;
+
+		// check all the inputs of the gate
+		//
+		// gate.inputs: cell pin is key, pin/net name is value
+		for (auto const& input_iter : gate.inputs) {
+			auto const& node_iter = data.nodes.find(input_iter.second);
+
+			// there's a node matching the input of the gate
+			if (node_iter != data.nodes.end()) {
+
+				// memorize the node as parent for the gate's node
+				data.nodes.find(gate.name)->second.parents.emplace_back(
+						&(node_iter->second)
+					);
+
+				// memorize the gate's node as child of the node
+				node_iter->second.children.emplace_back(
+						&(data.nodes.find(gate.name)->second)
+					);
+			}
+		}
+
+		// check all the outputs of the gate
+		//
+		// gate.outputs: cell pin is key, pin/net name is value
+		for (auto const& output_iter : gate.outputs) {
+			auto const& node_iter = data.nodes.find(output_iter.second);
+
+			// there's a node matching the output of the gate
+			if (node_iter != data.nodes.end()) {
+
+				// memorize the node as child for the gate's node
+				data.nodes.find(gate.name)->second.children.emplace_back(
+						&(node_iter->second)
+					);
+
+				// memorize the gate's node as parent of the node
+				node_iter->second.children.emplace_back(
+						&(data.nodes.find(gate.name)->second)
+					);
+			}
+		}
+	}
+
+	// TODO derive all inputs for primary outputs
+	// TODO derive all outputs for primary inputs
 
 	// dbg log and regular log
 	//
