@@ -18,6 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include <thread>
+#include <mutex>
 
 // (TODO) replace w/ chrono
 #include <sys/timeb.h>

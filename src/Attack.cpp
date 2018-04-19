@@ -8,6 +8,7 @@ int main (int argc, char** argv) {
 	bool success;
 	unsigned trials;
 	std::vector<std::thread> threads;
+	std::mutex m;
 
 	std::cout << std::endl;
 	std::cout << "Proximity attack on F2F interconnects camouflaging" << std::endl;
@@ -39,16 +40,10 @@ int main (int argc, char** argv) {
 
 	// run attack in parallel threads
 	while (!success) {
+
 		// init threads
 		for (unsigned t = 1; t <= data.threads; t++) {
-
-			// there can be race conditions on both success and trials
-			//
-			// for success, this is somewhat covered by checking for (success == true) in the beginning of Attack::trial, but it
-			// may still result in multiple runs with successful output; for trials, this may simply result in some trials not
-			// being counted; both seems acceptable
-			//
-			threads.emplace_back( std::thread(Attack::trial, std::cref(data), std::ref(success), std::ref(trials)) );
+			threads.emplace_back( std::thread(Attack::trial, std::cref(data), std::ref(success), std::ref(trials), std::ref(m)) );
 		}
 		// join threads; the main thread execution will pause until all threads are done
 		for (std::thread& t : threads) {
@@ -58,7 +53,7 @@ int main (int argc, char** argv) {
 		threads.clear();
 
 		if (!success) {
-			std::cout << "Attack> Trials so far (approximate number): " << trials << std::endl;
+			std::cout << "Attack> Trials so far: " << trials << std::endl;
 		}
 	}
 };
@@ -145,15 +140,18 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data const
 	out.close();
 }
 
-bool Attack::trial(Data const& data, bool& success, unsigned& trials) {
+bool Attack::trial(Data const& data, bool& success, unsigned& trials, std::mutex& m) {
+	bool success_trial;
 
 	// in case there's already a successful run, no need to continue
 	if (success) {
 		return true;
 	}
-	// in case there's no successful run yet, increase trials counter
+	// in case there's no successful run yet, increase trials counter (using mutex)
 	else {
+		m.lock();
 		trials++;
+		m.unlock();
 	}
 
 	if (Attack::DBG) {
@@ -171,22 +169,27 @@ bool Attack::trial(Data const& data, bool& success, unsigned& trials) {
 	// check for cycles, start from global source
 	//
 	// returns true if cycle found; hence negate to indicate success (no cycle)
-	//
-	// also use OR concatenation to memorize whenever a trial succeeds, and not to overwrite with another failing iteration which might
-	// still run in parallel
-	success |= !Attack::checkGraphForCycles(
+	success_trial = !Attack::checkGraphForCycles(
 			&(nodes[data.globalNodeNames.source])
 		);
 
-	if (success) {
+	// in case the run was successful, evaluate that run (using the mutex)
+	if (success_trial) {
+		m.lock();
+
+		success = true;
+
 		// evaluate assignment and output netlist
 		Attack::evaluateAndOutput(assignment, data);
+
+		m.unlock();
 	}
 
 	if (Attack::DBG) {
 		std::cout << "DBG> Attack trial STOP" << std::endl;
 	}
 
+	// for multithreading not required; success is passed as reference
 	return success;
 }
 
@@ -197,6 +200,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	}
 
 	// node not visited/checked yet
+	//
 	//
 	if (!node->visited) {
 
