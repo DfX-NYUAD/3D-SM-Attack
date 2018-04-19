@@ -22,7 +22,8 @@ class Attack {
 				std::set<std::string>& output_set,
 				std::unordered_multimap<std::string, std::string>& input_map,
 				std::unordered_map<std::string, Data::Node>& nodes,
-				Data::AssignmentF2F& assignment
+				Data::AssignmentF2F& assignment,
+				bool const& top_to_bottom
 		);
 
 	// constructors, destructors, if any non-implicit

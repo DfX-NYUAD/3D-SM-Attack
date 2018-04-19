@@ -618,7 +618,7 @@ bool Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 
 		// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
 		// some sink
-		success &= Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment);
+		success &= Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment, false);
 
 		if (Attack::DBG) {
 			std::cout << "DBG> Done ";
@@ -677,7 +677,7 @@ bool Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 
 		// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
 		// some sink
-		success &= Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment);
+		success &= Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment, true);
 
 		if (Attack::DBG) {
 			std::cout << "DBG> Done ";
@@ -764,7 +764,7 @@ bool Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 	return success;
 }
 	
-bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment) {
+bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, bool const& top_to_bottom) {
 
 	// pick F2F output pins randomly until all are considered
 	//
@@ -817,10 +817,18 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 		);
 
 		// also memorize the picked assignment
-		assignment.bottom_to_top.insert(std::make_pair(
-					*output,
-					input
-				));
+		if (top_to_bottom) {
+			assignment.top_to_bottom.insert(std::make_pair(
+						*output,
+						input
+					));
+			}
+		else {
+			assignment.bottom_to_top.insert(std::make_pair(
+						*output,
+						input
+					));
+		}
 
 		// erase all other assignments having the same input, to avoid multi-driver assignments
 		for (auto iter = input_map.begin(); iter != input_map.end(); ) {
