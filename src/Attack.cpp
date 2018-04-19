@@ -171,6 +171,15 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	out << std::endl;
 	out << "module recovered(";
 
+	// output all inputs for module ports
+	for (auto const& input : data.netlist.inputs) {
+
+		// ignore F2F inputs, those with "_"
+		if (input.find("_") == std::string::npos) {
+			out << input << ", ";
+		}
+	}
+
 	// count all the global outputs
 	unsigned output_count = 0;
 	for (auto const& output : data.netlist.outputs) {
@@ -180,97 +189,53 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 			output_count++;
 		}
 	}
-	// count all the global inputs
-	unsigned input_count = 0;
-	for (auto const& input : data.netlist.inputs) {
 
-		// ignore F2F inputs, those with "_"
-		if (input.find("_") == std::string::npos) {
-			input_count++;
-		}
-	}
-
-	// output all inputs for module ports
-	for (auto const& input : data.netlist.inputs) {
-
-		// ignore F2F inputs, those with "_"
-		if (input.find("_") == std::string::npos) {
-			out << input << ", ";
-		}
-	}
 	// output all outputs for module ports
-	unsigned count = output_count;
 	for (auto const& output : data.netlist.outputs) {
 
 		// ignore F2F outputs, those with "_"
 		if (output.find("_") == std::string::npos) {
 
 			// the last output has no comma following, and closes the port list
-			if (count == 1) {
+			if (output_count == 1) {
 				out << output << ");" << std::endl;
-				out << std::endl;
 			}
 			else {
 				out << output << ", ";
-				count--;
+				output_count--;
 			}
 		}
 	}
+	out << std::endl;
 
-	// output all inputs for input statement
-	count = input_count;
-	out << "input ";
+	// output all inputs
 	for (auto const& input : data.netlist.inputs) {
 
 		// ignore F2F inputs, those with "_"
 		if (input.find("_") == std::string::npos) {
 
-			// the last input has no comma following, and closes the statement
-			if (count == 1) {
-				out << input << ";" << std::endl;
-				out << std::endl;
-			}
-			else {
-				out << input << ", ";
-				count--;
-			}
+			out << "input " << input << ";" << std::endl;
 		}
 	}
-	// output all outputs for output statement
-	count = output_count;
-	out << "output ";
+	out << std::endl;
+
+	// output all outputs
 	for (auto const& output : data.netlist.outputs) {
 
 		// ignore F2F outputs, those with "_"
 		if (output.find("_") == std::string::npos) {
 
-			// the last output has no comma following, and closes the statement
-			if (count == 1) {
-				out << output << ";" << std::endl;
-				out << std::endl;
-			}
-			else {
-				out << output << ", ";
-				count--;
-			}
+			out << "output " << output << ";" << std::endl;
 		}
 	}
+	out << std::endl;
 
-	// output all wires for wire statement
-	count = data.netlist.wires.size();
-	out << "wire ";
+	// output all wires
 	for (auto const& wire : data.netlist.wires) {
 
-		// the last wire has no comma following, and closes the statement
-		if (count == 1) {
-			out << wire << ";" << std::endl;
-			out << std::endl;
-		}
-		else {
-			out << wire << ", ";
-			count--;
-		}
+		out << "wire " << wire << ";" << std::endl;
 	}
+	out << std::endl;
 
 	// output all gates 
 	for (auto const& gate_iter: data.netlist.gates) {
