@@ -817,7 +817,7 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 
 		if (Attack::DBG) {
 			std::cout << "DBG> output: " << *output << std::endl;
-			std::cout << "DBG>  Remaining inputs for that output:" << std::endl;
+			std::cout << "DBG>  Remaining inputs for that output [" << input_map.count(*output) << "]:" << std::endl;
 
 			auto iter = input_map.equal_range(*output);
 			for (auto input = iter.first; input != iter.second; ++input) {
@@ -832,7 +832,10 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 		if (input_map.count(*output) == 0) {
 			return false;
 		}
-		auto const& input = std::next(input_map.equal_range(*output).first,
+
+		// CANNOT USE REFERENCE HERE; otherwise the erasing procedure below, iterating over input_map, will mess up the value of
+		// input
+		auto input = std::next(input_map.equal_range(*output).first,
 				Attack::rand(0, input_map.count(*output))
 			)->second;
 
@@ -857,14 +860,20 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 			if (iter->second == input) {
 			
 				if (Attack::DBG) {
-					std::cout << "DBG>   Removing the following assignment: ";
-					std::cout << iter->first << " -> " << iter->second;
+					std::cout << "DBG>   Removing the following assignment for \"" << input << "\": ";
+					std::cout << "\"" << iter->first << "\" -> \"" << iter->second << "\"";
 					std::cout << std::endl;
 				}
 
 				iter = input_map.erase(iter);
 			}
 			else {
+				//if (Attack::DBG) {
+				//	std::cout << "DBG>   NOT removing the following assignment for \"" << input << "\": ";
+				//	std::cout << "\"" << iter->first << "\" -> \"" << iter->second << "\"";
+				//	std::cout << std::endl;
+				//}
+
 				++iter;
 			}
 		}
