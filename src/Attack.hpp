@@ -26,7 +26,7 @@ class Attack {
 				Data const& data,
 				bool const& connectF2F
 			);
-		static void evaluate(
+		static void evaluateAndOutput(
 				Data::AssignmentF2F const& assignment,
 				Data const& data
 			);

@@ -63,14 +63,13 @@ int main (int argc, char** argv) {
 	}
 };
 
-void Attack::evaluate(Data::AssignmentF2F const& assignment, Data const& data) {
+void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data const& data) {
+	std::ofstream out;
 	unsigned total_connections;
 	unsigned correct_connections;
 
 	std::cout << "Attack>" << std::endl;
 	std::cout << "Attack> Success! Found F2F assignment without cycles" << std::endl;
-	std::cout << "Attack>" << std::endl;
-	std::cout << "Attack> Reporting the F2F assignment:" << std::endl;
 	std::cout << "Attack>" << std::endl;
 
 	// evaluating the CCR: correct_connections over total_connections
@@ -78,60 +77,72 @@ void Attack::evaluate(Data::AssignmentF2F const& assignment, Data const& data) {
 	total_connections = assignment.bottom_to_top.size() + assignment.top_to_bottom.size();
 	correct_connections = 0;
 
-	std::cout << "Attack>  Bottom to top:" << std::endl;
-	std::cout << "Attack>" << std::endl;
+	// writing out the mappings and netlist as well
+	//
+	out.open(data.files.out_netlist.c_str());
+
+	out << "// F2F assignmets:" << std::endl;
+	out << "//" << std::endl;
+	out << "//  Bottom to top:" << std::endl;
 	for (auto const& a : assignment.bottom_to_top) {
 
-		std::cout << "Attack>   " << a.first << " -> " << a.second;
+		out << "//   " << a.first << " -> " << a.second;
 
 		// evaluate correct connections by name
 		//
 		// corner case: if only one assignment is possible, this is consider as correct; this is mimicked by using the same
 		// string
 		if (data.F2F.bottom_to_top.count(a.first) == 1) {
-			std::cout << " (correct)" << std::endl;
+			out << " (correct)" << std::endl;
 			correct_connections++;
 		}
 		// regular case: names match
 		else if (a.second.find(a.first) != std::string::npos) {
-			std::cout << " (correct)" << std::endl;
+			out << " (correct)" << std::endl;
 			correct_connections++;
 		}
 		else {
-			std::cout << " (not correct)" << std::endl;
+			out << " (not correct)" << std::endl;
 		}
 	}
-	std::cout << "Attack>" << std::endl;
+	out << "//" << std::endl;
 
-	std::cout << "Attack>  Top to bottom:" << std::endl;
-	std::cout << "Attack>" << std::endl;
+	out << "//  Top to bottom:" << std::endl;
+	out << "//" << std::endl;
 	for (auto const& a : assignment.top_to_bottom) {
 
-		std::cout << "Attack>   " << a.first << " -> " << a.second;
+		out << "//   " << a.first << " -> " << a.second;
 
 		// evaluate correct connections by name
 		//
 		// corner case: if only one assignment is possible, this is consider as correct; this is mimicked by using the same
 		// string
 		if (data.F2F.top_to_bottom.count(a.first) == 1) {
-			std::cout << " (correct)" << std::endl;
+			out << " (correct)" << std::endl;
 			correct_connections++;
 		}
 		// regular case: names match
 		else if (a.first.find(a.second) != std::string::npos) {
-			std::cout << " (correct)" << std::endl;
+			out << " (correct)" << std::endl;
 
 			correct_connections++;
 		}
 		else {
-			std::cout << " (not correct)" << std::endl;
+			out << " (not correct)" << std::endl;
 		}
 	}
-	std::cout << "Attack>" << std::endl;
+	out << "//" << std::endl;
 
 	std::cout << "Attack> Correct connections: " << correct_connections << std::endl;
+	out << "// Correct connections: " << correct_connections << std::endl;
+
 	std::cout << "Attack> Total connections: " << total_connections << std::endl;
+	out << "// Total connections: " << total_connections << std::endl;
+
 	std::cout << "Attack> Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
+	out << "// Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
+
+	out.close();
 }
 
 bool Attack::trial(Data const& data, bool& success, unsigned& trials) {
@@ -168,8 +179,8 @@ bool Attack::trial(Data const& data, bool& success, unsigned& trials) {
 		);
 
 	if (success) {
-		// evaluate assignment 
-		Attack::evaluate(assignment, data);
+		// evaluate assignment and output netlist
+		Attack::evaluateAndOutput(assignment, data);
 	}
 
 	if (Attack::DBG) {
