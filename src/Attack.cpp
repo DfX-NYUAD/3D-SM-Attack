@@ -629,30 +629,36 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 	if (connectF2F) {
 
 		// connect bottom-to-top nodes
-		for (auto const& output_bottom : data.F2F.keys_bottom_to_top) {
+		//
+		// copy keys (output_bottom)
+		auto output_bottom_set = data.F2F.keys_bottom_to_top;
+		// copy assignments (input_top)
+		auto input_top_map = data.F2F.bottom_to_top;
 
-			// pick one randomly
-			auto const& random = Attack::rand(0, data.F2F.bottom_to_top.count(output_bottom) - 1);
-			auto const& input_top = std::next(data.F2F.bottom_to_top.equal_range(output_bottom).first, random)->second;
+		if (Attack::DBG) {
+			std::cout << "DBG> Picking randomly for bottom_to_top mappings ..." << std::endl;
+		}
 
-			// memorize the picked node as child for the output node
-			nodes.find(output_bottom)->second.children.emplace_back(
-				&(nodes.find(input_top)->second)
-			);
+		// pick from output_bottom_set randomly until all are considered
+		Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment);
 
-			// also memorize the assignment
-			assignment.bottom_to_top.insert(std::make_pair(
-						output_bottom,
-						input_top
-					));
+		if (Attack::DBG) {
+			std::cout << "DBG> Done" << std::endl;
+		}
 
-//			// dbg; pick the correct mapping based on names
+//		// dbg
+//		//
+//		// connect bottom-to-top nodes
+//		for (auto const& output_bottom : data.F2F.keys_bottom_to_top) {
+//
 //			auto const& iter_range = data.F2F.bottom_to_top.equal_range(output_bottom);
 //			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
 //
 //				auto const& input_top = (*iter).second;
 //
-//				// dbg; pick the correct mapping based on names
+//				// pick the correct mapping based on names
+//				// TODO does not capture any 1:1 mapping with different names, e.g. for POs
+//				//
 //				if (input_top.find(output_bottom) == std::string::npos) {
 //					continue;
 //				}
@@ -671,33 +677,39 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 //							input_top
 //						));
 //			}
-		}
+//		}
 
 		// connect top-to-bottom nodes
-		for (auto const& output_top : data.F2F.keys_top_to_bottom) {
+		//
+		// copy keys (output_top)
+		auto output_top_set = data.F2F.keys_top_to_bottom;
+		// copy assignments (input_bottom)
+		auto input_bottom_map = data.F2F.top_to_bottom;
 
-			// pick one randomly
-			auto const& random = Attack::rand(0, data.F2F.top_to_bottom.count(output_top) - 1);
-			auto const& input_bottom = std::next(data.F2F.top_to_bottom.equal_range(output_top).first, random)->second;
+		if (Attack::DBG) {
+			std::cout << "DBG> Picking randomly for top_to_bottom mappings ..." << std::endl;
+		}
 
-			// memorize the picked node as child for the output node
-			nodes.find(output_top)->second.children.emplace_back(
-					&(nodes.find(input_bottom)->second)
-				);
+		// pick from output_bottom_set randomly until all are considered
+		Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment);
 
-			// also memorize the assignment
-			assignment.top_to_bottom.insert(std::make_pair(
-						output_top,
-						input_bottom
-					));
+		if (Attack::DBG) {
+			std::cout << "DBG> Done" << std::endl;
+		}
 
-//			// dbg; pick the correct mapping based on names
+//		// dbg
+//		//
+//		// connect top-to-bottom nodes
+//		for (auto const& output_top : data.F2F.keys_top_to_bottom) {
+//
 //			auto const& iter_range = data.F2F.top_to_bottom.equal_range(output_top);
 //			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
 //
 //				auto const& input_bottom = (*iter).second;
 //
-//				// dbg; pick the correct mapping based on names
+//				// pick the correct mapping based on names
+//				// TODO does not capture any 1:1 mapping with different names, e.g. for POs
+//				//
 //				if (output_top.find(input_bottom) == std::string::npos) {
 //					continue;
 //				}
@@ -716,7 +728,7 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 //							input_bottom
 //						));
 //			}
-		}
+//		}
 	}
 
 	// dbg log
@@ -754,5 +766,82 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 		std::cout << "Attack>  Nodes: " << nodes.size() << std::endl;
 		std::cout << "Attack>  Edges: " << edges << std::endl;
 		std::cout << "Attack> " << std::endl;
+	}
+}
+	
+void Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment) {
+
+	// pick F2F output pins randomly until all are considered
+	//
+	while (!output_set.empty()) {
+
+		if (Attack::DBG) {
+			std::cout << "DBG> Remaining output_set [" << output_set.size() << "]:" << std::endl;
+
+			for (auto const& output : output_set) {
+				std::cout << "DBG>  " << output << std::endl;
+			}
+		}
+
+		// pick key randomly
+		auto const& output = std::next(output_set.begin(),
+				Attack::rand(0, output_set.size())
+			);
+
+		if (Attack::DBG) {
+			std::cout << "DBG> output: " << *output << std::endl;
+			std::cout << "DBG>  Remaining inputs for that output:" << std::endl;
+
+			auto iter = input_map.equal_range(*output);
+			for (auto input = iter.first; input != iter.second; ++input) {
+				std::cout << "DBG>   " << (*input).second << std::endl;
+			}
+		}
+
+		// pick assignment for that key randomly
+		//
+		// sanity check whether any assignment remains; may arise due to inappropriate selection of assignment sinks
+		if (input_map.count(*output) == 0) {
+			return;
+		}
+		auto const& input = std::next(input_map.equal_range(*output).first,
+				Attack::rand(0, input_map.count(*output))
+			)->second;
+
+		if (Attack::DBG) {
+			std::cout << "DBG>   Picking the following input: " << input << std::endl;
+		}
+
+		// memorize the node related to the picked assignment as child for the output node
+		nodes.find(*output)->second.children.emplace_back(
+			&(nodes.find(input)->second)
+		);
+
+		// also memorize the picked assignment
+		assignment.bottom_to_top.insert(std::make_pair(
+					*output,
+					input
+				));
+
+		// erase all other assignments having the same input, to avoid multi-driver assignments
+		for (auto iter = input_map.begin(); iter != input_map.end(); ) {
+
+			if (iter->second == input) {
+			
+				if (Attack::DBG) {
+					std::cout << "DBG>   Removing the following assignment: ";
+					std::cout << iter->first << " -> " << iter->second;
+					std::cout << std::endl;
+				}
+
+				iter = input_map.erase(iter);
+			}
+			else {
+				++iter;
+			}
+		}
+
+		// erase key from set
+		output_set.erase(output);
 	}
 }
