@@ -411,18 +411,21 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 		success_trial = !Attack::checkGraphForCycles(
 				&(nodes[data.globalNodeNames.source])
 			);
+
+		// in case the run was successful, evaluate that run (using the mutex)
+		if (success_trial) {
+			m.lock();
+
+			success = true;
+
+			// evaluate assignment and output netlist
+			Attack::evaluateAndOutput(assignment, data);
+
+			m.unlock();
+		}
 	}
-
-	// in case the run was successful, evaluate that run (using the mutex)
-	if (success_trial) {
-		m.lock();
-
-		success = true;
-
-		// evaluate assignment and output netlist
-		Attack::evaluateAndOutput(assignment, data);
-
-		m.unlock();
+	else {
+		std::cout << "Attack> Failed to assign all F2F mappings; check the mappings.file ..." << std::endl;
 	}
 
 	if (Attack::DBG) {
