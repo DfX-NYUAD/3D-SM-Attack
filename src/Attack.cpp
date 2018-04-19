@@ -60,6 +60,11 @@ int main (int argc, char** argv) {
 
 void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, Data::Gate& gate, Data& data) {
 
+	//if (Attack::DBG) {
+	//	std::cout << "DBG> Mapping: " << a.first << " -> " << a. second << std::endl;
+	//	std::cout << "DBG> Gate: " << gate.name << std::endl;
+	//}
+
 	// first is pin name, second is net/pin name
 	for (auto& output : gate.outputs) {
 
@@ -659,6 +664,12 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 //				nodes.find(output_bottom)->second.children.emplace_back(
 //					&(nodes.find(input_top)->second)
 //				);
+//
+//				// also memorize the assignment
+//				assignment.bottom_to_top.insert(std::make_pair(
+//							output_bottom,
+//							input_top
+//						));
 //			}
 		}
 
@@ -687,7 +698,7 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 //				auto const& input_bottom = (*iter).second;
 //
 //				// dbg; pick the correct mapping based on names
-//				if (input_bottom.find(output_top) == std::string::npos) {
+//				if (output_top.find(input_bottom) == std::string::npos) {
 //					continue;
 //				}
 //
@@ -698,6 +709,12 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 //				nodes.find(output_top)->second.children.emplace_back(
 //						&(nodes.find(input_bottom)->second)
 //					);
+//
+//				// also memorize the assignment
+//				assignment.top_to_bottom.insert(std::make_pair(
+//							output_top,
+//							input_bottom
+//						));
 //			}
 		}
 	}
