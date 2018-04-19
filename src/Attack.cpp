@@ -392,7 +392,7 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 	}
 
 	if (Attack::DBG) {
-		std::cout << "DBG> Attack trial START" << std::endl;
+		std::cout << "DBG> Attack trial ..." << std::endl;
 	}
 
 	// graph container
@@ -400,15 +400,18 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 	std::unordered_map<std::string, Data::Node> nodes;
 	Data::AssignmentF2F assignment;
 
-	// init the graph, and also connect the F2F nodes
-	Attack::initGraph(nodes, assignment, data, true);
+	// init the graph, and also connect the F2F nodes; may fail in case not all drivers can be mapped to some sink
+	success_trial = Attack::initGraph(nodes, assignment, data, true);
 
-	// check for cycles, start from global source
-	//
-	// returns true if cycle found; hence negate to indicate success (no cycle)
-	success_trial = !Attack::checkGraphForCycles(
-			&(nodes[data.globalNodeNames.source])
-		);
+	if (success_trial) {
+
+		// check for cycles, start from global source
+		//
+		// returns true if cycle found; hence negate to indicate success (no cycle)
+		success_trial = !Attack::checkGraphForCycles(
+				&(nodes[data.globalNodeNames.source])
+			);
+	}
 
 	// in case the run was successful, evaluate that run (using the mutex)
 	if (success_trial) {
@@ -423,7 +426,12 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 	}
 
 	if (Attack::DBG) {
-		std::cout << "DBG> Attack trial STOP" << std::endl;
+		if (success_trial) {
+			std::cout << "DBG> Attack trial SUCCESS" << std::endl;
+		}
+		else {
+			std::cout << "DBG> Attack trial FAIL" << std::endl;
+		}
 	}
 
 	// for multithreading not required; success is passed as reference
@@ -503,7 +511,8 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	return false;
 }
 
-void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, Data const& data, bool const& connectF2F) {
+bool Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, Data const& data, bool const& connectF2F) {
+	bool success = true;
 
 	if (Attack::DBG) {
 		std::cout << "Attack> Initializing the graph ..." << std::endl;
@@ -639,11 +648,19 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 			std::cout << "DBG> Picking randomly for bottom_to_top mappings ..." << std::endl;
 		}
 
-		// pick from output_bottom_set randomly until all are considered
-		Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment);
+		// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
+		// some sink
+		success &= Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment);
 
 		if (Attack::DBG) {
-			std::cout << "DBG> Done" << std::endl;
+			std::cout << "DBG> Done ";
+			if (success) {
+				std::cout << "SUCCESS";
+			}
+			else {
+				std::cout << "FAIL";
+			}
+			std::cout << std::endl;
 		}
 
 //		// dbg
@@ -690,11 +707,19 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 			std::cout << "DBG> Picking randomly for top_to_bottom mappings ..." << std::endl;
 		}
 
-		// pick from output_bottom_set randomly until all are considered
-		Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment);
+		// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
+		// some sink
+		success &= Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment);
 
 		if (Attack::DBG) {
-			std::cout << "DBG> Done" << std::endl;
+			std::cout << "DBG> Done ";
+			if (success) {
+				std::cout << "SUCCESS";
+			}
+			else {
+				std::cout << "FAIL";
+			}
+			std::cout << std::endl;
 		}
 
 //		// dbg
@@ -767,9 +792,11 @@ void Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 		std::cout << "Attack>  Edges: " << edges << std::endl;
 		std::cout << "Attack> " << std::endl;
 	}
+
+	return success;
 }
 	
-void Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment) {
+bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment) {
 
 	// pick F2F output pins randomly until all are considered
 	//
@@ -800,9 +827,10 @@ void Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 
 		// pick assignment for that key randomly
 		//
-		// sanity check whether any assignment remains; may arise due to inappropriate selection of assignment sinks
+		// sanity check whether any assignment remains; may arise due to unlucky selection of assignments such that no input
+		// remains, or due to inappropriate definition for sinks in the mappings file
 		if (input_map.count(*output) == 0) {
-			return;
+			return false;
 		}
 		auto const& input = std::next(input_map.equal_range(*output).first,
 				Attack::rand(0, input_map.count(*output))
@@ -844,4 +872,6 @@ void Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 		// erase key from set
 		output_set.erase(output);
 	}
+
+	return true;
 }

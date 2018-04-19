@@ -18,7 +18,7 @@ class Attack {
 			Data::Gate& gate,
 			Data& data
 		);
-		static void pickAssignments(
+		static bool pickAssignments(
 				std::set<std::string>& output_set,
 				std::unordered_multimap<std::string, std::string>& input_map,
 				std::unordered_map<std::string, Data::Node>& nodes,
@@ -36,7 +36,7 @@ class Attack {
 				unsigned& trials,
 				std::mutex& m
 			);
-		static void initGraph(
+		static bool initGraph(
 				std::unordered_map<std::string, Data::Node>& nodes,
 				Data::AssignmentF2F& assignment,
 				Data const& data,
