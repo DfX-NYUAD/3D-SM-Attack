@@ -7,7 +7,7 @@ void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 
 	// print command-line parameters
 	if (argc < 7) {
-		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v mappings.file cells.inputs cells.outputs out.v" << std::endl;
+		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v mappings.file cells.inputs cells.outputs out.v [threads]" << std::endl;
 		std::cout << "IO> " << std::endl;
 		std::cout << "IO> Mandatory parameter ``top.v'': Netlist for top tier" << std::endl;
 		std::cout << "IO> Mandatory parameter ``bottom.v'': Netlist for bottom tier" << std::endl;
@@ -15,6 +15,7 @@ void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 		std::cout << "IO> Mandatory parameter ``cells.inputs'': All cells and all their inputs" << std::endl;
 		std::cout << "IO> Mandatory parameter ``cells.outputs'': All cells and all their outputs" << std::endl;
 		std::cout << "IO> Mandatory parameter ``out.v'': Recovered netlist" << std::endl;
+		std::cout << "IO> Optional parameter ``threads'': threads for parallel attack" << std::endl;
 		exit(1);
 	}
 
@@ -25,6 +26,11 @@ void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 	data.files.cells_inputs = argv[4];
 	data.files.cells_outputs = argv[5];
 	data.files.out_netlist = argv[6];
+
+	// read in optional arguments
+	if (argc == 8) {
+		data.threads = std::stoi(argv[7]);
+	}
 
 	// test input files
 	IO::testFile(data.files.top_netlist);

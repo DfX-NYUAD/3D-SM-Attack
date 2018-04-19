@@ -17,6 +17,8 @@
 #include <bitset>
 #include <utility>
 #include <algorithm>
+#include <thread>
+
 // (TODO) replace w/ chrono
 #include <sys/timeb.h>
 

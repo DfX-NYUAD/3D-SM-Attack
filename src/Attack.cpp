@@ -5,6 +5,9 @@
 
 int main (int argc, char** argv) {
 	Data data;
+	bool success;
+	unsigned trials;
+	std::vector<std::thread> threads;
 
 	std::cout << std::endl;
 	std::cout << "Proximity attack on F2F interconnects camouflaging" << std::endl;
@@ -29,12 +32,34 @@ int main (int argc, char** argv) {
 	// init random generator
 	std::srand(std::time(nullptr));
 
-	// try attack until one mapping is found without cycles
-	unsigned trial = 1;
-	while (!Attack::trial(data)) {
+	// prepare attack runs
+	threads.reserve(data.threads);
+	success = false;
+	trials = 0;
 
-		std::cout << "Attack> Trial " << trial << " ..." << std::endl;
-		trial++;
+	// run attack in parallel threads
+	while (!success) {
+		// init threads
+		for (unsigned t = 1; t <= data.threads; t++) {
+
+			// there can be race conditions on both success and trials
+			//
+			// for success, this is somewhat covered by checking for (success == true) in the beginning of Attack::trial, but it
+			// may still result in multiple runs with successful output; for trials, this may simply result in some trials not
+			// being counted; both seems acceptable
+			//
+			threads.emplace_back( std::thread(Attack::trial, std::cref(data), std::ref(success), std::ref(trials)) );
+		}
+		// join threads; the main thread execution will pause until all threads are done
+		for (std::thread& t : threads) {
+			t.join();
+		}
+		// clean up all threads
+		threads.clear();
+
+		if (!success) {
+			std::cout << "Attack> Trials so far (approximate number): " << trials << std::endl;
+		}
 	}
 };
 
@@ -109,8 +134,20 @@ void Attack::evaluate(Data::AssignmentF2F const& assignment, Data const& data) {
 	std::cout << "Attack> Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
 }
 
-bool Attack::trial(Data const& data) {
-	bool success;
+bool Attack::trial(Data const& data, bool& success, unsigned& trials) {
+
+	// in case there's already a successful run, no need to continue
+	if (success) {
+		return true;
+	}
+	// in case there's no successful run yet, increase trials counter
+	else {
+		trials++;
+	}
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Attack trial START" << std::endl;
+	}
 
 	// graph container
 	// mapping: name, node
@@ -123,13 +160,20 @@ bool Attack::trial(Data const& data) {
 	// check for cycles, start from global source
 	//
 	// returns true if cycle found; hence negate to indicate success (no cycle)
-	success = !Attack::checkGraphForCycles(
+	//
+	// also use OR concatenation to memorize whenever a trial succeeds, and not to overwrite with another failing iteration which might
+	// still run in parallel
+	success |= !Attack::checkGraphForCycles(
 			&(nodes[data.globalNodeNames.source])
 		);
 
 	if (success) {
 		// evaluate assignment 
 		Attack::evaluate(assignment, data);
+	}
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Attack trial STOP" << std::endl;
 	}
 
 	return success;

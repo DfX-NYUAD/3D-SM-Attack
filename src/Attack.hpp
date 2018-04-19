@@ -19,7 +19,7 @@ class Attack {
 
 	// public data, functions
 	public:
-		static bool trial(Data const& data);
+		static bool trial(Data const& data, bool& success, unsigned& trials);
 		static void initGraph(
 				std::unordered_map<std::string, Data::Node>& nodes,
 				Data::AssignmentF2F& assignment,

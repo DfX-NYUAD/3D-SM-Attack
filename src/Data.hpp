@@ -18,6 +18,9 @@ class Data {
 
 	// public data
 	public:
+		// threads
+		unsigned threads = 1;
+
 		// POD for files names
 		struct files {
 			std::string bottom_netlist;
