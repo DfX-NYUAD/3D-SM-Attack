@@ -43,7 +43,7 @@ int main (int argc, char** argv) {
 
 		// init threads
 		for (unsigned t = 1; t <= data.threads; t++) {
-			threads.emplace_back( std::thread(Attack::trial, std::cref(data), std::ref(success), std::ref(trials), std::ref(m)) );
+			threads.emplace_back( std::thread(Attack::trial, std::ref(data), std::ref(success), std::ref(trials), std::ref(m)) );
 		}
 		// join threads; the main thread execution will pause until all threads are done
 		for (std::thread& t : threads) {
@@ -58,7 +58,70 @@ int main (int argc, char** argv) {
 	}
 };
 
-void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data const& data) {
+void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, Data::Gate& gate, Data& data) {
+
+	// first is pin name, second is net/pin name
+	for (auto& output : gate.outputs) {
+
+		// the gate's output matches with the assignment driver or the assignment sink
+		if (output.second == a.first || output.second == a.second) {
+
+			if (Attack::DBG) {
+				std::cout << "DBG>  Affected gate: " << gate.name;
+				std::cout << "; mapping: " << a.first << " -> " << a. second;
+				std::cout << "; affected output: " << output.first << "(" << output.second << ")" << std::endl;
+			}
+
+			// in case the assignment driver is a PO, rename the gate output towards that PO
+			if (a.first.find("_") == std::string::npos) {
+				output.second = a.first;
+			}
+			// regular case, no PO; rename gate output towards new wire
+			else {
+				output.second = a.first + "_" + a.second;
+			}
+
+			// also memorize that new wire
+			data.netlist.wires.insert(output.second);
+
+			if (Attack::DBG) {
+				std::cout << "DBG>   New output: " << output.second << std::endl;
+			}
+		}
+	}
+
+	// first is pin name, second is net/pin name
+	for (auto& input : gate.inputs) {
+
+		// the gate's input matches with the assignment driver or the assignment sink
+		if (input.second == a.first || input.second == a.second) {
+
+			if (Attack::DBG) {
+				std::cout << "DBG>  Affected gate: " << gate.name;
+				std::cout << "; mapping: " << a.first << " -> " << a. second;
+				std::cout << "; affected input: " << input.first << "(" << input.second << ")" << std::endl;
+			}
+
+			// in case the assignment driver is a PO, rename the gate input towards that PO
+			if (a.first.find("_") == std::string::npos) {
+				input.second = a.first;
+			}
+			// regular case, no PO; rename gate input towards new wire
+			else {
+				input.second = a.first + "_" + a.second;
+			}
+
+			// also memorize that new wire
+			data.netlist.wires.insert(input.second);
+
+			if (Attack::DBG) {
+				std::cout << "DBG>   New input: " << input.second << std::endl;
+			}
+		}
+	}
+}
+
+void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data) {
 	std::ofstream out;
 	unsigned total_connections;
 	unsigned correct_connections;
@@ -66,16 +129,185 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data const
 	std::cout << "Attack>" << std::endl;
 	std::cout << "Attack> Success! Found F2F assignment without cycles" << std::endl;
 	std::cout << "Attack>" << std::endl;
+	std::cout << "Attack> Writing out netlist ..." << std::endl;
 
-	// evaluating the CCR: correct_connections over total_connections
+	out.open(data.files.out_netlist.c_str());
+
+	// 1) rewrite the gates' connectivity, based on F2F mappings
+	//
+	// also add new wires to model those F2F mappings
+	//
+	if (Attack::DBG) {
+		std::cout << "DBG> Rewriting gates' connectivity, adding wires to model F2F mappings ... " << std::endl;
+		std::cout << "DBG>" << std::endl;
+	}
+	for (auto& gate_iter: data.netlist.gates) {
+		auto& gate = gate_iter.second;
+
+		// check all the mappings, revise gate connectivity if it's covered by one assignment
+		//
+		// note that some inputs as well as some outputs can be affected by that mapping, inputs namely when the output is reused in
+		// the bottom tier for another gate's input
+		//
+		for (auto const& a : assignment.bottom_to_top) {
+
+			Attack::rewriteConnectivity(a, gate, data);
+		}
+		for (auto const& a : assignment.top_to_bottom) {
+
+			Attack::rewriteConnectivity(a, gate, data);
+		}
+	}
+
+	// 2) write out netlist
+	//
+	out << "// Netlist recovered by proximity attack on obfuscated F2F mappings" << std::endl;
+	out << "//" << std::endl;
+	out << std::endl;
+	out << "module recovered(";
+
+	// count all the global outputs
+	unsigned output_count = 0;
+	for (auto const& output : data.netlist.outputs) {
+
+		// ignore F2F outputs, those with "_"
+		if (output.find("_") == std::string::npos) {
+			output_count++;
+		}
+	}
+	// count all the global inputs
+	unsigned input_count = 0;
+	for (auto const& input : data.netlist.inputs) {
+
+		// ignore F2F inputs, those with "_"
+		if (input.find("_") == std::string::npos) {
+			input_count++;
+		}
+	}
+
+	// output all inputs for module ports
+	for (auto const& input : data.netlist.inputs) {
+
+		// ignore F2F inputs, those with "_"
+		if (input.find("_") == std::string::npos) {
+			out << input << ", ";
+		}
+	}
+	// output all outputs for module ports
+	unsigned count = output_count;
+	for (auto const& output : data.netlist.outputs) {
+
+		// ignore F2F outputs, those with "_"
+		if (output.find("_") == std::string::npos) {
+
+			// the last output has no comma following, and closes the port list
+			if (count == 1) {
+				out << output << ");" << std::endl;
+				out << std::endl;
+			}
+			else {
+				out << output << ", ";
+				count--;
+			}
+		}
+	}
+
+	// output all inputs for input statement
+	count = input_count;
+	out << "input ";
+	for (auto const& input : data.netlist.inputs) {
+
+		// ignore F2F inputs, those with "_"
+		if (input.find("_") == std::string::npos) {
+
+			// the last input has no comma following, and closes the statement
+			if (count == 1) {
+				out << input << ";" << std::endl;
+				out << std::endl;
+			}
+			else {
+				out << input << ", ";
+				count--;
+			}
+		}
+	}
+	// output all outputs for output statement
+	count = output_count;
+	out << "output ";
+	for (auto const& output : data.netlist.outputs) {
+
+		// ignore F2F outputs, those with "_"
+		if (output.find("_") == std::string::npos) {
+
+			// the last output has no comma following, and closes the statement
+			if (count == 1) {
+				out << output << ";" << std::endl;
+				out << std::endl;
+			}
+			else {
+				out << output << ", ";
+				count--;
+			}
+		}
+	}
+
+	// output all wires for wire statement
+	count = data.netlist.wires.size();
+	out << "wire ";
+	for (auto const& wire : data.netlist.wires) {
+
+		// the last wire has no comma following, and closes the statement
+		if (count == 1) {
+			out << wire << ";" << std::endl;
+			out << std::endl;
+		}
+		else {
+			out << wire << ", ";
+			count--;
+		}
+	}
+
+	// output all gates 
+	for (auto const& gate_iter: data.netlist.gates) {
+		Data::Gate const& gate = gate_iter.second;
+
+		out << gate.type << " ";
+		out << gate.name << " ";
+
+		out << "(";
+
+		for (auto const& input : gate.inputs) {
+			out << "." << input.first << "(" << input.second << "), ";
+		}
+
+		unsigned count = gate.outputs.size();
+		for (auto const& output : gate.outputs) {
+
+			if (count == 1) {
+				out << "." << output.first << "(" << output.second << ")";
+			}
+			else {
+				out << "." << output.first << "(" << output.second << "), ";
+			}
+		}
+
+		out << ");" << std::endl;
+	}
+
+	out << std::endl;
+	out << "endmodule" << std::endl;
+	out << std::endl;
+
+	std::cout << "Attack> Done" << std::endl;
+	std::cout << "Attack>" << std::endl;
+	std::cout << "Attack> Evaluating connections:" << std::endl;
+
+	// 3) evaluate the CCR: correct_connections over total_connections
 	//
 	total_connections = assignment.bottom_to_top.size() + assignment.top_to_bottom.size();
 	correct_connections = 0;
 
-	// writing out the mappings and netlist as well
-	//
-	out.open(data.files.out_netlist.c_str());
-
+	out << "//" << std::endl;
 	out << "// F2F assignmets:" << std::endl;
 	out << "//" << std::endl;
 	out << "//  Bottom to top:" << std::endl;
@@ -128,19 +360,19 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data const
 	}
 	out << "//" << std::endl;
 
-	std::cout << "Attack> Correct connections: " << correct_connections << std::endl;
+	std::cout << "Attack>  Correct connections: " << correct_connections << std::endl;
 	out << "// Correct connections: " << correct_connections << std::endl;
 
-	std::cout << "Attack> Total connections: " << total_connections << std::endl;
+	std::cout << "Attack>  Total connections: " << total_connections << std::endl;
 	out << "// Total connections: " << total_connections << std::endl;
 
-	std::cout << "Attack> Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
+	std::cout << "Attack>  Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
 	out << "// Correct connections ratio: " << static_cast<double>(correct_connections) / total_connections << std::endl;
 
 	out.close();
 }
 
-bool Attack::trial(Data const& data, bool& success, unsigned& trials, std::mutex& m) {
+bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 	bool success_trial;
 
 	// in case there's already a successful run, no need to continue

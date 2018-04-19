@@ -13,6 +13,11 @@ class Attack {
 
 	// private data, functions
 	private:
+		static void rewriteConnectivity(
+			std::pair<std::string, std::string> const& a,
+			Data::Gate& gate,
+			Data& data
+		);
 
 	// constructors, destructors, if any non-implicit
 	private:
@@ -20,7 +25,7 @@ class Attack {
 	// public data, functions
 	public:
 		static bool trial(
-				Data const& data,
+				Data& data,
 				bool& success,
 				unsigned& trials,
 				std::mutex& m
@@ -33,7 +38,7 @@ class Attack {
 			);
 		static void evaluateAndOutput(
 				Data::AssignmentF2F const& assignment,
-				Data const& data
+				Data& data
 			);
 
 		static bool checkGraphForCycles(Data::Node const* node);
