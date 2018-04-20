@@ -240,6 +240,8 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	// output all gates 
 	for (auto const& gate_iter: data.netlist.gates) {
 		Data::Gate const& gate = gate_iter.second;
+		unsigned outputs_remaining = gate.outputs.size();
+		unsigned inputs_remaining = gate.inputs.size();
 
 		out << gate.type << " ";
 		out << gate.name << " ";
@@ -247,17 +249,32 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 		out << "(";
 
 		for (auto const& input : gate.inputs) {
-			out << "." << input.first << "(" << input.second << "), ";
-		}
 
-		unsigned count = gate.outputs.size();
-		for (auto const& output : gate.outputs) {
-
-			if (count == 1) {
-				out << "." << output.first << "(" << output.second << ")";
+			// corner case: no outputs are present and this is the last input, so end port mapping already here
+			if (outputs_remaining == 0 && inputs_remaining == 1) {
+				out << "." << input.first << "(" << input.second << ")";
 			}
 			else {
-				out << "." << output.first << "(" << output.second << "), ";
+				out << "." << input.first << "(" << input.second << "), ";
+				inputs_remaining--;
+			}
+		}
+
+		// only one output
+		if (outputs_remaining == 1) {
+			out << "." << gate.outputs.begin()->first << "(" << gate.outputs.begin()->second << ")";
+		}
+		// multiple outputs (or zero outputs)
+		else {
+			for (auto const& output : gate.outputs) {
+
+				if (outputs_remaining == 1) {
+					out << "." << output.first << "(" << output.second << ")";
+				}
+				else {
+					out << "." << output.first << "(" << output.second << "), ";
+					outputs_remaining--;
+				}
 			}
 		}
 
