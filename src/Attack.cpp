@@ -30,8 +30,10 @@ int main (int argc, char** argv) {
 	// parse the F2F mappings
 	IO::parseMappings(data);
 
-	// init random generator
-	std::srand(std::time(nullptr));
+	// init random generator with high-resolution timing seed
+	auto now = std::chrono::high_resolution_clock::now();
+	auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+	std::srand(nanos);
 
 	// prepare attack runs
 	threads.reserve(data.threads);
