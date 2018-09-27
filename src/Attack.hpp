@@ -31,17 +31,16 @@ class Attack {
 
 	// public data, functions
 	public:
-		static bool trial(
+		static void trial(
 				Data& data,
 				bool& success,
 				unsigned& trials,
 				std::mutex& m
 			);
-		static bool initGraph(
+		static bool tackleGraph(
 				std::unordered_map<std::string, Data::Node>& nodes,
 				Data::AssignmentF2F& assignment,
-				Data const& data,
-				bool const& connectF2F
+				Data const& data
 			);
 		static void evaluateAndOutput(
 				Data::AssignmentF2F const& assignment,

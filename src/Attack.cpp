@@ -361,12 +361,12 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	out.close();
 }
 
-bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
+void Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 	bool success_trial;
 
 	// in case there's already a successful run, no need to continue
 	if (success) {
-		return true;
+		return;
 	}
 	// in case there's no successful run yet, increase trials counter (using mutex)
 	else {
@@ -384,19 +384,27 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 	std::unordered_map<std::string, Data::Node> nodes;
 	Data::AssignmentF2F assignment;
 
-	// init the graph, and also connect the F2F nodes; may fail in case not all drivers can be mapped to some sink
-	success_trial = Attack::initGraph(nodes, assignment, data, true);
+	// init the graph, attack/tackle also the F2F nodes
+	//
+	// It's important to understand that the based graph (w/o F2F connections) CANNOT be initialized once in the beginning, and then
+	// copied for each thread -- the pointers for children in the graph would be based on the initial data, hence, adding any F2F edges
+	// even on the copy of the graph would impose those edits on the initial data of the base graph.
+	// Besides, initializing the graph once but then having to rewrite all the pointers for any copy would probably not help much for
+	// performance.
+	//
+	success_trial = Attack::tackleGraph(nodes, assignment, data);
 
+	// graph could be build up
 	if (success_trial) {
 
-		// check for cycles, start from global source
+		// now check for cycles, start from global source
 		//
 		// returns true if cycle found; hence negate to indicate success (no cycle)
 		success_trial = !Attack::checkGraphForCycles(
 				&(nodes[data.globalNodeNames.source])
 			);
 
-		// in case the run was successful, evaluate that run (using the mutex)
+		// in case the run was successful, without having any cycle, evaluate that run (using the mutex)
 		if (success_trial) {
 			m.lock();
 
@@ -408,6 +416,7 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 			m.unlock();
 		}
 	}
+	// handling of the graph may fail in case not all drivers can be mapped to some sink
 	else {
 		std::cout << "Attack> Failed to assign all F2F mappings; check the mappings.file ..." << std::endl;
 	}
@@ -420,9 +429,6 @@ bool Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 			std::cout << "DBG> Attack trial FAIL" << std::endl;
 		}
 	}
-
-	// for multithreading not required; success is passed as reference
-	return success;
 }
 
 bool Attack::checkGraphForCycles(Data::Node const* node) {
@@ -498,7 +504,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	return false;
 }
 
-bool Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, Data const& data, bool const& connectF2F) {
+bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, Data const& data) {
 	bool success = true;
 
 	if (Attack::DBG) {
@@ -621,133 +627,132 @@ bool Attack::initGraph(std::unordered_map<std::string, Data::Node>& nodes, Data:
 		}
 	}
 
-	// connect also F2F nodes, if desired
-	if (connectF2F) {
+	// connect F2F nodes -- heart of the attack
+	//
 
-		// connect bottom-to-top nodes
-		//
-		// copy keys (output_bottom)
-		auto output_bottom_set = data.F2F.keys_bottom_to_top;
-		// copy assignments (input_top)
-		auto input_top_map = data.F2F.bottom_to_top;
+	// connect bottom-to-top nodes
+	//
+	// copy keys (output_bottom)
+	auto output_bottom_set = data.F2F.keys_bottom_to_top;
+	// copy assignments (input_top)
+	auto input_top_map = data.F2F.bottom_to_top;
 
-		if (Attack::DBG) {
-			std::cout << "DBG> Picking randomly for bottom_to_top mappings ..." << std::endl;
+	if (Attack::DBG) {
+		std::cout << "DBG> Picking randomly for bottom_to_top mappings ..." << std::endl;
+	}
+
+	// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
+	// some sink
+	success &= Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment, false);
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Done ";
+		if (success) {
+			std::cout << "SUCCESS";
 		}
-
-		// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
-		// some sink
-		success &= Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment, false);
-
-		if (Attack::DBG) {
-			std::cout << "DBG> Done ";
-			if (success) {
-				std::cout << "SUCCESS";
-			}
-			else {
-				std::cout << "FAIL";
-			}
-			std::cout << std::endl;
+		else {
+			std::cout << "FAIL";
 		}
+		std::cout << std::endl;
+	}
 
-//		// dbg
-//		//
-//		// connect bottom-to-top nodes
-//		for (auto const& output_bottom : data.F2F.keys_bottom_to_top) {
+//	// dbg
+//	//
+//	// connect bottom-to-top nodes
+//	for (auto const& output_bottom : data.F2F.keys_bottom_to_top) {
 //
-//			auto const& iter_range = data.F2F.bottom_to_top.equal_range(output_bottom);
-//			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
+//		auto const& iter_range = data.F2F.bottom_to_top.equal_range(output_bottom);
+//		for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
 //
-//				auto const& input_top = (*iter).second;
+//			auto const& input_top = (*iter).second;
 //
-//				// pick the correct mapping based on names
-//				// TODO does not capture any 1:1 mapping with different names, e.g. for POs
-//				//
-//				if (input_top.find(output_bottom) == std::string::npos) {
-//					continue;
-//				}
+//			// pick the correct mapping based on names
+//			// TODO does not capture any 1:1 mapping with different names, e.g. for POs
+//			//
+//			if (input_top.find(output_bottom) == std::string::npos) {
+//				continue;
+//			}
 //
-//				std::cout << "output_bottom: " << output_bottom << std::endl;
-//				std::cout << "    input_top: " << input_top << std::endl;
+//			std::cout << "output_bottom: " << output_bottom << std::endl;
+//			std::cout << "    input_top: " << input_top << std::endl;
 //
-//				// memorize the picked node as child for the output node
-//				nodes.find(output_bottom)->second.children.emplace_back(
-//					&(nodes.find(input_top)->second)
+//			// memorize the picked node as child for the output node
+//			nodes.find(output_bottom)->second.children.emplace_back(
+//				&(nodes.find(input_top)->second)
+//			);
+//
+//			// also memorize the assignment
+//			assignment.bottom_to_top.insert(std::make_pair(
+//						output_bottom,
+//						input_top
+//					));
+//		}
+//	}
+
+	// connect top-to-bottom nodes
+	//
+	// copy keys (output_top)
+	auto output_top_set = data.F2F.keys_top_to_bottom;
+	// copy assignments (input_bottom)
+	auto input_bottom_map = data.F2F.top_to_bottom;
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Picking randomly for top_to_bottom mappings ..." << std::endl;
+	}
+
+	// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
+	// some sink
+	success &= Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment, true);
+
+	if (Attack::DBG) {
+		std::cout << "DBG> Done ";
+		if (success) {
+			std::cout << "SUCCESS";
+		}
+		else {
+			std::cout << "FAIL";
+		}
+		std::cout << std::endl;
+	}
+
+//	// dbg
+//	//
+//	// connect top-to-bottom nodes
+//	for (auto const& output_top : data.F2F.keys_top_to_bottom) {
+//
+//		auto const& iter_range = data.F2F.top_to_bottom.equal_range(output_top);
+//		for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
+//
+//			auto const& input_bottom = (*iter).second;
+//
+//			// pick the correct mapping based on names
+//			// TODO does not capture any 1:1 mapping with different names, e.g. for POs
+//			//
+//			if (output_top.find(input_bottom) == std::string::npos) {
+//				continue;
+//			}
+//
+//			std::cout << "  output_top: " << output_top << std::endl;
+//			std::cout << "input_bottom: " << input_bottom << std::endl;
+//
+//			// memorize the picked node as child for the output node
+//			nodes.find(output_top)->second.children.emplace_back(
+//					&(nodes.find(input_bottom)->second)
 //				);
 //
-//				// also memorize the assignment
-//				assignment.bottom_to_top.insert(std::make_pair(
-//							output_bottom,
-//							input_top
-//						));
-//			}
+//			// also memorize the assignment
+//			assignment.top_to_bottom.insert(std::make_pair(
+//						output_top,
+//						input_bottom
+//					));
 //		}
-
-		// connect top-to-bottom nodes
-		//
-		// copy keys (output_top)
-		auto output_top_set = data.F2F.keys_top_to_bottom;
-		// copy assignments (input_bottom)
-		auto input_bottom_map = data.F2F.top_to_bottom;
-
-		if (Attack::DBG) {
-			std::cout << "DBG> Picking randomly for top_to_bottom mappings ..." << std::endl;
-		}
-
-		// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
-		// some sink
-		success &= Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment, true);
-
-		if (Attack::DBG) {
-			std::cout << "DBG> Done ";
-			if (success) {
-				std::cout << "SUCCESS";
-			}
-			else {
-				std::cout << "FAIL";
-			}
-			std::cout << std::endl;
-		}
-
-//		// dbg
-//		//
-//		// connect top-to-bottom nodes
-//		for (auto const& output_top : data.F2F.keys_top_to_bottom) {
-//
-//			auto const& iter_range = data.F2F.top_to_bottom.equal_range(output_top);
-//			for (auto iter = iter_range.first; iter != iter_range.second; ++iter) {
-//
-//				auto const& input_bottom = (*iter).second;
-//
-//				// pick the correct mapping based on names
-//				// TODO does not capture any 1:1 mapping with different names, e.g. for POs
-//				//
-//				if (output_top.find(input_bottom) == std::string::npos) {
-//					continue;
-//				}
-//
-//				std::cout << "  output_top: " << output_top << std::endl;
-//				std::cout << "input_bottom: " << input_bottom << std::endl;
-//
-//				// memorize the picked node as child for the output node
-//				nodes.find(output_top)->second.children.emplace_back(
-//						&(nodes.find(input_bottom)->second)
-//					);
-//
-//				// also memorize the assignment
-//				assignment.top_to_bottom.insert(std::make_pair(
-//							output_top,
-//							input_bottom
-//						));
-//			}
-//		}
-	}
+//	}
 
 	// dbg log
 	//
 	if (Attack::DBG) {
 
-		std::cout << "DBG> Print all nodes: " << std::endl;
+		std::cout << "DBG> Print netlist graph, with F2F connections: " << std::endl;
 
 		// count all edges
 		int edges = 0;
@@ -834,6 +839,15 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 		nodes.find(*output)->second.children.emplace_back(
 			&(nodes.find(input)->second)
 		);
+
+		if (Attack::DBG) {
+			std::cout << "DBG>   Memorize the assignment in the graph..." << std::endl;
+			std::cout << "DBG>    Node " << nodes.find(*output)->first << "'s new set of children:" << std::endl;
+			for (auto const* child : nodes.find(*output)->second.children) {
+				std::cout << "DBG>     " << child->name << std::endl;
+			}
+		}
+
 
 		// also memorize the picked assignment
 		if (top_to_bottom) {
