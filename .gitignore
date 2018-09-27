@@ -1,0 +1,5 @@
+build/
+proximity_attack
+out*.v
+wrapper*.v
+*.zip
