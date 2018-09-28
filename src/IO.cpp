@@ -93,6 +93,13 @@ void IO::parseMappings(Data& data) {
 							// name of input pin, without prefix
 							tmpstr.substr(tmpstr.find("/") + 1)
 						));
+				// also memorize the inverted
+				data.F2F.inverted_bottom_to_top.insert(std::make_pair(
+							// name of input pin, without prefix
+							tmpstr.substr(tmpstr.find("/") + 1),
+							output
+						));
+
 				// also memorize all the output pins separately
 				// note that also POs may be among them
 				data.F2F.keys_bottom_to_top.insert(output);
@@ -108,6 +115,13 @@ void IO::parseMappings(Data& data) {
 							// name of input pin, without prefix
 							tmpstr.substr(tmpstr.find("/") + 1)
 						));
+				// also memorize the inverted
+				data.F2F.inverted_top_to_bottom.insert(std::make_pair(
+							// name of input pin, without prefix
+							tmpstr.substr(tmpstr.find("/") + 1),
+							output
+						));
+
 				// also memorize all the output pins separately
 				// note that also POs may be among them
 				data.F2F.keys_top_to_bottom.insert(output);
