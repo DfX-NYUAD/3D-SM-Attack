@@ -579,6 +579,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 
 	// connect graph based on connectivity of gates
 	for (auto const& gate : data.netlist.gates) {
+		auto const& gate_iter = nodes.find(gate.name);
 
 		// check all the inputs of the gate
 		//
@@ -591,7 +592,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 
 				// memorize the gate's node as child of the node
 				node_iter->second.children.emplace_back(
-						&(nodes.find(gate.name)->second)
+						&(gate_iter->second)
 					);
 
 				//// memorize the node as parent for the gate's node
@@ -611,7 +612,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 			if (node_iter != nodes.end()) {
 
 				// memorize the node as child for the gate's node
-				nodes.find(gate.name)->second.children.emplace_back(
+				gate_iter->second.children.emplace_back(
 						&(node_iter->second)
 					);
 
