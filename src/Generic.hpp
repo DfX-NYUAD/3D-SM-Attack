@@ -4,6 +4,7 @@
 
 // STL
 #include <iostream>
+#include <locale>
 #include <iomanip>
 #include <fstream>
 #include <sstream>

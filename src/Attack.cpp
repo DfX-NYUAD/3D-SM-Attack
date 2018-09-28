@@ -55,6 +55,7 @@ int main (int argc, char** argv) {
 		threads.clear();
 
 		if (!success) {
+			std::cout.imbue(std::locale(""));
 			std::cout << "Attack> Trials so far: " << trials << std::endl;
 		}
 	}
