@@ -640,7 +640,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 
 	// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
 	// some sink
-	success &= Attack::pickAssignments(output_bottom_set, input_top_map, nodes, assignment, false);
+	success &= Attack::tackleF2F(output_bottom_set, input_top_map, nodes, assignment, false);
 
 	if (Attack::DBG) {
 		std::cout << "DBG> Done ";
@@ -699,7 +699,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 
 	// pick from output_bottom_set randomly until all are considered, also keep track whether each driver could be assigned to
 	// some sink
-	success &= Attack::pickAssignments(output_top_set, input_bottom_map, nodes, assignment, true);
+	success &= Attack::tackleF2F(output_top_set, input_bottom_map, nodes, assignment, true);
 
 	if (Attack::DBG) {
 		std::cout << "DBG> Done ";
@@ -785,9 +785,19 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 	return success;
 }
 	
-bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, bool const& top_to_bottom) {
+bool Attack::tackleF2F(std::unordered_set<std::string>& output_set, std::unordered_multimap<std::string, std::string>& input_map, std::unordered_map<std::string, Data::Node>& nodes, Data::AssignmentF2F& assignment, bool const& top_to_bottom) {
+	std::unordered_multimap<std::string, std::string> reverted_input_map;
 
-	// pick F2F output pins randomly until all are considered
+	// first, we need to derive all the possible drivers/outputs for each input -- that is, the reverted input_map
+	for (auto iter = input_map.begin(); iter != input_map.end(); ++iter) {
+
+		reverted_input_map.insert(std::make_pair(
+					iter->second,
+					iter->first
+					));
+	}
+
+	// now we can pick and assign F2F outputs to inputs for the other tier until all are considered
 	//
 	while (!output_set.empty()) {
 
@@ -799,14 +809,14 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 			}
 		}
 
-		// pick key randomly
+		// pick key/output randomly
 		auto const& output = std::next(output_set.begin(),
 				Attack::rand(0, output_set.size())
 			);
 
 		if (Attack::DBG) {
 			std::cout << "DBG> output: " << *output << std::endl;
-			std::cout << "DBG>  Remaining inputs for that output [" << input_map.count(*output) << "]:" << std::endl;
+			std::cout << "DBG>  Remaining inputs -- in other tier! -- for that output [" << input_map.count(*output) << "]:" << std::endl;
 
 			auto iter = input_map.equal_range(*output);
 			for (auto input = iter.first; input != iter.second; ++input) {
@@ -814,7 +824,7 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 			}
 		}
 
-		// pick assignment for that key randomly
+		// pick assignment for that key/output randomly
 		//
 		// sanity check whether any assignment remains; may arise due to unlucky selection of assignments such that no input
 		// remains, or due to inappropriate definition for sinks in the mappings file
@@ -829,7 +839,7 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 			)->second;
 
 		if (Attack::DBG) {
-			std::cout << "DBG>   Picking the following input: " << input << std::endl;
+			std::cout << "DBG>   Picking the following input port from the other tier as being driven by \"" << *output << "\": \"" << input << "\"" << std::endl;
 		}
 
 		// memorize the node related to the picked assignment as child for the output node
@@ -839,7 +849,7 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 
 		if (Attack::DBG) {
 			std::cout << "DBG>   Memorize the assignment in the graph..." << std::endl;
-			std::cout << "DBG>    Node " << nodes.find(*output)->first << "'s new set of children:" << std::endl;
+			std::cout << "DBG>    Node " << nodes.find(*output)->second.name << "'s new set of children:" << std::endl;
 			for (auto const* child : nodes.find(*output)->second.children) {
 				std::cout << "DBG>     " << child->name << std::endl;
 			}
@@ -860,31 +870,52 @@ bool Attack::pickAssignments(std::set<std::string>& output_set,	std::unordered_m
 					));
 		}
 
-		// erase all other assignments having the same input, to avoid multi-driver assignments
-		for (auto iter = input_map.begin(); iter != input_map.end(); ) {
+		// erase all other assignments from any output to this same input, to avoid multi-driver assignments
+		// 
+		// also, considering there are only 1-to-1 F2F mappings, erase all other possible mappings for the output/driver just
+		// assigned
+		//
+		auto outputs = reverted_input_map.equal_range(input);
 
-			if (iter->second == input) {
-			
-				if (Attack::DBG) {
-					std::cout << "DBG>   Removing the following assignment for \"" << input << "\": ";
-					std::cout << "\"" << iter->first << "\" -> \"" << iter->second << "\"";
-					std::cout << std::endl;
+		for (auto output_iter = outputs.first; output_iter != outputs.second; ++output_iter) {
+
+			auto inputs = input_map.equal_range(output_iter->second);
+
+			for (auto input_iter = inputs.first; input_iter != inputs.second; ) {
+
+				if (input_iter->second == input) {
+
+					if (Attack::DBG) {
+						std::cout << "DBG>   Removing the following other, previously possible driver/assignment for \"" << input << "\": ";
+						std::cout << "\"" << input_iter->first << "\" -> \"" << input_iter->second << "\"";
+						std::cout << std::endl;
+					}
+
+					input_iter = input_map.erase(input_iter);
 				}
+				else if (input_iter->first == *output) {
 
-				iter = input_map.erase(iter);
-			}
-			else {
-				//if (Attack::DBG) {
-				//	std::cout << "DBG>   NOT removing the following assignment for \"" << input << "\": ";
-				//	std::cout << "\"" << iter->first << "\" -> \"" << iter->second << "\"";
-				//	std::cout << std::endl;
-				//}
+					if (Attack::DBG) {
+						std::cout << "DBG>   Removing the following other, previously possible driver/assignment for \"" << *output << "\": ";
+						std::cout << "\"" << input_iter->first << "\" -> \"" << input_iter->second << "\"";
+						std::cout << std::endl;
+					}
 
-				++iter;
+					input_iter = input_map.erase(input_iter);
+				}
+				else {
+					if (Attack::DBG) {
+						std::cout << "DBG>   NOT removing the following assignment: ";
+						std::cout << "\"" << input_iter->first << "\" -> \"" << input_iter->second << "\"";
+						std::cout << std::endl;
+					}
+
+					++input_iter;
+				}
 			}
 		}
 
-		// erase key from set
+		// erase key/output from set of yet unassigned outputs
 		output_set.erase(output);
 	}
 

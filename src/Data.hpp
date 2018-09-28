@@ -97,12 +97,12 @@ class Data {
 			// output pins of bottom to input pins of top
 			std::unordered_multimap<std::string, std::string> bottom_to_top;
 			// output pins of bottom
-			std::set<std::string> keys_bottom_to_top;
+			std::unordered_set<std::string> keys_bottom_to_top;
 
 			// output pins of top to input pins of bottom
 			std::unordered_multimap<std::string, std::string> top_to_bottom;
 			// output pins of top
-			std::set<std::string> keys_top_to_bottom;
+			std::unordered_set<std::string> keys_top_to_bottom;
 		} F2F;
 
 		// the final assignments, to be populated in Attack::initGraph as well
