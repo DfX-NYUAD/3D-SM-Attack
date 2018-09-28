@@ -148,8 +148,7 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 		std::cout << "DBG> Rewriting gates' connectivity, adding wires to model F2F mappings ... " << std::endl;
 		std::cout << "DBG>" << std::endl;
 	}
-	for (auto& gate_iter: data.netlist.gates) {
-		auto& gate = gate_iter.second;
+	for (auto& gate : data.netlist.gates) {
 
 		// check all the mappings, revise gate connectivity if it's covered by one assignment
 		//
@@ -240,8 +239,7 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	out << std::endl;
 
 	// output all gates 
-	for (auto const& gate_iter: data.netlist.gates) {
-		Data::Gate const& gate = gate_iter.second;
+	for (auto const& gate: data.netlist.gates) {
 		unsigned outputs_remaining = gate.outputs.size();
 		unsigned inputs_remaining = gate.inputs.size();
 
@@ -562,8 +560,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 	}
 
 	// add gates as nodes
-	for (auto const& gate_iter : data.netlist.gates) {
-		Data::Gate const& gate = gate_iter.second;
+	for (auto const& gate : data.netlist.gates) {
 
 		nodes.insert(std::make_pair(
 					gate.name,
@@ -581,8 +578,7 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 	}
 
 	// connect graph based on connectivity of gates
-	for (auto const& gate_iter : data.netlist.gates) {
-		Data::Gate const& gate = gate_iter.second;
+	for (auto const& gate : data.netlist.gates) {
 
 		// check all the inputs of the gate
 		//

@@ -425,10 +425,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 				//std::cout << "STOP: " << line << std::endl;
 
 				// memorize the gate
-				data.netlist.gates.insert(std::make_pair(
-							new_gate.name,
-							new_gate
-						));
+				data.netlist.gates.emplace_back(new_gate);
 			}
 		}
 	}
@@ -466,8 +463,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		std::cout << "IO_DBG> Print all gates: " << std::endl;
 
-		for (auto const& gate_iter : data.netlist.gates) {
-			Data::Gate const& gate = gate_iter.second;
+		for (Data::Gate const& gate : data.netlist.gates) {
 
 			std::cout << "IO_DBG>  " << gate.type << " " << gate.name;
 

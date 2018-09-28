@@ -88,8 +88,8 @@ class Data {
 			std::set<std::string> outputs;
 			// wires may be redundant in top/bottom tier, so we also use a std::set here
 			std::set<std::string> wires;
-			// gates should not redundant; for better access, use map
-			std::unordered_map<std::string, Gate> gates;
+			// gates should not redundant
+			std::vector<Gate> gates;
 		} netlist;
 		
 		// PODs for F2F vias/pins
