@@ -27,6 +27,7 @@ class IO {
 		static void parseParametersFiles(Data& data, int const& argc, char** argv);
 		static void parseCells(Data& data, bool const& outputs);
 		static void parseNetlist(Data& data, bool const& top_tier);
+		static void parseRegularPorts(Data& data);
 		static void parseMappings(Data& data);
 };
 

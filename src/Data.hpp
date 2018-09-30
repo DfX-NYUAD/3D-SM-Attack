@@ -25,6 +25,7 @@ class Data {
 		struct files {
 			std::string bottom_netlist;
 			std::string top_netlist;
+			std::string wrapper_netlist;
 			std::string obfuscated_mappings;
 			std::string cells_inputs;
 			std::string cells_outputs;
@@ -83,10 +84,12 @@ class Data {
 
 		// PODs for netlists
 		struct Netlist {
-			// I/Os can definitely be redundant in top/bottom tier, so we use a std::set here to avoid duplicates
+			// I/Os ports may be redundant in top/bottom tier, so we use a std::set here to avoid duplicates
 			std::set<std::string> inputs;
 			std::set<std::string> outputs;
-			// wires may be redundant in top/bottom tier, so we also use a std::set here
+			// F2F ports may be redundant in top/bottom tier as well
+			std::set<std::string> F2F;
+			// wires may be redundant in top/bottom tier as well
 			std::set<std::string> wires;
 			// gates should not redundant
 			std::vector<Gate> gates;

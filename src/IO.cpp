@@ -6,11 +6,12 @@
 void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 
 	// print command-line parameters
-	if (argc < 7) {
+	if (argc < 8) {
 		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v mappings.file cells.inputs cells.outputs out.v [threads]" << std::endl;
 		std::cout << "IO> " << std::endl;
 		std::cout << "IO> Mandatory parameter ``top.v'': Netlist for top tier" << std::endl;
 		std::cout << "IO> Mandatory parameter ``bottom.v'': Netlist for bottom tier" << std::endl;
+		std::cout << "IO> Mandatory parameter ``wrapper.v'': Netlist for wrapping bottom and top tier -- only used for parsing of regular IO ports" << std::endl;
 		std::cout << "IO> Mandatory parameter ``mappings.file'': File with the obfuscated mappings for the F2F interconnects" << std::endl;
 		std::cout << "IO> Mandatory parameter ``cells.inputs'': All cells and all their inputs" << std::endl;
 		std::cout << "IO> Mandatory parameter ``cells.outputs'': All cells and all their outputs" << std::endl;
@@ -22,19 +23,21 @@ void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 	// read in mandatory parameters
 	data.files.top_netlist = argv[1];
 	data.files.bottom_netlist = argv[2];
-	data.files.obfuscated_mappings = argv[3];
-	data.files.cells_inputs = argv[4];
-	data.files.cells_outputs = argv[5];
-	data.files.out_netlist = argv[6];
+	data.files.wrapper_netlist = argv[3];
+	data.files.obfuscated_mappings = argv[4];
+	data.files.cells_inputs = argv[5];
+	data.files.cells_outputs = argv[6];
+	data.files.out_netlist = argv[7];
 
 	// read in optional arguments
-	if (argc == 8) {
-		data.threads = std::stoi(argv[7]);
+	if (argc == 9) {
+		data.threads = std::stoi(argv[8]);
 	}
 
 	// test input files
 	IO::testFile(data.files.top_netlist);
 	IO::testFile(data.files.bottom_netlist);
+	IO::testFile(data.files.wrapper_netlist);
 	IO::testFile(data.files.obfuscated_mappings);
 	IO::testFile(data.files.cells_inputs);
 	IO::testFile(data.files.cells_outputs);
@@ -150,9 +153,9 @@ void IO::parseMappings(Data& data) {
 
 	std::cout << "IO> Done" << std::endl;
 	std::cout << "IO>  F2F outputs in bottom (there may be POs among them): " << data.F2F.keys_bottom_to_top.size() << std::endl;
-	std::cout << "IO>  All mappings from bottom to top: " << data.F2F.bottom_to_top.size() << std::endl;
+	std::cout << "IO>   All mappings from bottom to top: " << data.F2F.bottom_to_top.size() << std::endl;
 	std::cout << "IO>  F2F outputs in top (there may be POs among them): " << data.F2F.keys_top_to_bottom.size() << std::endl;
-	std::cout << "IO>  All mappings from top to bottom: " << data.F2F.top_to_bottom.size() << std::endl;
+	std::cout << "IO>   All mappings from top to bottom: " << data.F2F.top_to_bottom.size() << std::endl;
 	std::cout << "IO> " << std::endl;
 }
 
@@ -254,27 +257,14 @@ void IO::parseCells(Data& data, bool const& outputs) {
 	std::cout << "IO> " << std::endl;
 }
 
-void IO::parseNetlist(Data& data, bool const& top_tier) {
+void IO::parseRegularPorts(Data& data) {
 	std::ifstream in;
 	std::string line;
 	std::string tmpstr;
-	std::string file;
 
-	if (top_tier) {
-		file = data.files.top_netlist;
-	}
-	else {
-		file = data.files.bottom_netlist;
-	}
-	in.open(file.c_str());
+	in.open(data.files.wrapper_netlist.c_str());
 
-	std::cout << "IO> Parsing the netlist of the ";
-	if (top_tier) {
-		std::cout << "top tier ...";
-	}
-	else {
-		std::cout << "bottom tier ...";
-	}
+	std::cout << "IO> Parsing the wrapper netlist for the regular ports, not the F2F ports ...";
 	std::cout << std::endl;
 
 	// 1) parse inputs, line by line
@@ -324,6 +314,117 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
 
 			data.netlist.outputs.insert(tmpstr);
+		}
+	}
+	
+	// close file
+	in.close();
+
+	// dbg log of parsed tuples
+	//
+	if (IO::DBG) {
+
+		std::cout << "IO_DBG> Print all inputs: " << std::endl;
+
+		for (auto const& input : data.netlist.inputs) {
+
+			std::cout << "IO_DBG>  " << input;
+			std::cout << std::endl;
+		}
+
+		std::cout << "IO_DBG> Print all outputs: " << std::endl;
+
+		for (auto const& output : data.netlist.outputs) {
+
+			std::cout << "IO_DBG>  " << output;
+			std::cout << std::endl;
+		}
+	}
+
+	std::cout << "IO> Done" << std::endl;
+	std::cout << "IO>  Regular input ports: " << data.netlist.inputs.size() << std::endl;
+	std::cout << "IO>  Regular output ports: " << data.netlist.outputs.size() << std::endl;
+	std::cout << "IO> " << std::endl;
+};
+
+void IO::parseNetlist(Data& data, bool const& top_tier) {
+	std::ifstream in;
+	std::string line;
+	std::string tmpstr;
+	std::string file;
+
+	if (top_tier) {
+		file = data.files.top_netlist;
+	}
+	else {
+		file = data.files.bottom_netlist;
+	}
+	in.open(file.c_str());
+
+	std::cout << "IO> Parsing the netlist of the ";
+	if (top_tier) {
+		std::cout << "top tier ...";
+	}
+	else {
+		std::cout << "bottom tier ...";
+	}
+	std::cout << std::endl;
+
+	// 1) parse F2F inputs, line by line
+	//
+	while (std::getline(in, line)) {
+
+		// skip all the irrelevant lines
+		if (!(line.find("input") != std::string::npos && line.find(";") != std::string::npos)) {
+			continue;
+		}
+		// process all the relevant lines
+		else {
+			std::istringstream linestream(line);
+
+			// drop "input";
+			linestream >> tmpstr;
+
+			// parse the input name, without the final ";"
+			linestream >> tmpstr;
+			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
+
+			// F2F ports are only those ports which are not memorized as regular ports yet
+			//
+			if (data.netlist.inputs.find(tmpstr) == data.netlist.inputs.end()) {
+				data.netlist.F2F.insert(tmpstr);
+			}
+		}
+	}
+	
+	// reset file handler
+	in.clear() ;
+	in.seekg(0, in.beg);
+
+	// 2) parse F2F outputs, line by line
+	//
+	while (std::getline(in, line)) {
+
+		// skip all the irrelevant lines
+		if (!(line.find("output") != std::string::npos && line.find(";") != std::string::npos)) {
+			continue;
+		}
+		// process all the relevant lines
+		else {
+			std::istringstream linestream(line);
+
+			// drop "output";
+			linestream >> tmpstr;
+
+			// parse the output name, without the final ";"
+			linestream >> tmpstr;
+			tmpstr = tmpstr.substr(0, tmpstr.find(";"));
+
+			// F2F ports are only those ports which are not memorized as regular ports yet
+			//
+			if (data.netlist.outputs.find(tmpstr) == data.netlist.outputs.end()) {
+				data.netlist.F2F.insert(tmpstr);
+			}
 		}
 	}
 	
@@ -451,19 +552,11 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	//
 	if (IO::DBG) {
 
-		std::cout << "IO_DBG> Print all inputs: " << std::endl;
+		std::cout << "IO_DBG> Print all F2F ports: " << std::endl;
 
-		for (auto const& input : data.netlist.inputs) {
+		for (auto const& port : data.netlist.F2F) {
 
-			std::cout << "IO_DBG>  " << input;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all outputs: " << std::endl;
-
-		for (auto const& output : data.netlist.outputs) {
-
-			std::cout << "IO_DBG>  " << output;
+			std::cout << "IO_DBG>  " << port;
 			std::cout << std::endl;
 		}
 
@@ -497,9 +590,9 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	}
 
 	std::cout << "IO> Done" << std::endl;
-	std::cout << "IO>  Inputs (both PI and F2F): " << data.netlist.inputs.size() << std::endl;
-	std::cout << "IO>  Outputs (both PO and F2F): " << data.netlist.outputs.size() << std::endl;
-	std::cout << "IO>  Wires: " << data.netlist.wires.size() << std::endl;
-	std::cout << "IO>  Gates: " << data.netlist.gates.size() << std::endl;
+	std::cout << "IO>  Total F2F ports (inputs/outputs): " << data.netlist.F2F.size() << std::endl;
+	std::cout << "IO>  Total wires: " << data.netlist.wires.size() << std::endl;
+	std::cout << "IO>  Total gates: " << data.netlist.gates.size() << std::endl;
+	std::cout << "IO> Note that counts also contain the instances from the parsing of the other netlist, if done already" << std::endl;
 	std::cout << "IO> " << std::endl;
 };

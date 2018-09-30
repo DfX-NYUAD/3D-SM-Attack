@@ -22,12 +22,14 @@ int main (int argc, char** argv) {
 	// parse cell outputs
 	IO::parseCells(data, true);
 
+	// for the netlist, parse regular ports to begin with
+	IO::parseRegularPorts(data);
 	// parse bottom tier netlist
 	IO::parseNetlist(data, false);
 	// parse top tier netlist
 	IO::parseNetlist(data, true);
 
-	// parse the F2F mappings
+	// finally, parse the F2F mappings
 	IO::parseMappings(data);
 
 	// init random generator with high-resolution timing seed
@@ -81,7 +83,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 			}
 
 			// in case the assignment driver is a PO, rename the gate output towards that PO
-			if (a.first.find("_") == std::string::npos) {
+			if (data.netlist.outputs.find(a.first) != data.netlist.outputs.end()) {
 				output.second = a.first;
 			}
 			// regular case, no PO; rename gate output towards new wire
@@ -89,7 +91,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 				output.second = a.first + "_" + a.second;
 			}
 
-			// also memorize that new wire
+			// also memorize that new wire; by using set, no redundant wires arise
 			data.netlist.wires.insert(output.second);
 
 			if (Attack::DBG) {
@@ -111,7 +113,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 			}
 
 			// in case the assignment driver is a PO, rename the gate input towards that PO
-			if (a.first.find("_") == std::string::npos) {
+			if (data.netlist.outputs.find(a.first) != data.netlist.outputs.end()) {
 				input.second = a.first;
 			}
 			// regular case, no PO; rename gate input towards new wire
@@ -119,7 +121,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 				input.second = a.first + "_" + a.second;
 			}
 
-			// also memorize that new wire
+			// also memorize that new wire; by using set, no redundant wires arise
 			data.netlist.wires.insert(input.second);
 
 			if (Attack::DBG) {
@@ -175,66 +177,38 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 
 	// output all inputs for module ports
 	for (auto const& input : data.netlist.inputs) {
-
-		// ignore F2F inputs, those with "_"
-		if (input.find("_") == std::string::npos) {
-			out << input << ", ";
-		}
-	}
-
-	// count all the global outputs
-	unsigned output_count = 0;
-	for (auto const& output : data.netlist.outputs) {
-
-		// ignore F2F outputs, those with "_"
-		if (output.find("_") == std::string::npos) {
-			output_count++;
-		}
+		out << input << ", ";
 	}
 
 	// output all outputs for module ports
+	unsigned count = 1;
 	for (auto const& output : data.netlist.outputs) {
 
-		// ignore F2F outputs, those with "_"
-		if (output.find("_") == std::string::npos) {
-
-			// the last output has no comma following, and closes the port list
-			if (output_count == 1) {
-				out << output << ");" << std::endl;
-			}
-			else {
-				out << output << ", ";
-				output_count--;
-			}
+		// the last output has no comma following, and it also closes the port list
+		if (count == data.netlist.outputs.size()) {
+			out << output << ");" << std::endl;
+		}
+		else {
+			out << output << ", ";
+			count++;
 		}
 	}
 	out << std::endl;
 
 	// output all inputs
 	for (auto const& input : data.netlist.inputs) {
-
-		// ignore F2F inputs, those with "_"
-		if (input.find("_") == std::string::npos) {
-
-			out << "input " << input << ";" << std::endl;
-		}
+		out << "input " << input << ";" << std::endl;
 	}
 	out << std::endl;
 
 	// output all outputs
 	for (auto const& output : data.netlist.outputs) {
-
-		// ignore F2F outputs, those with "_"
-		if (output.find("_") == std::string::npos) {
-
-			out << "output " << output << ";" << std::endl;
-		}
+		out << "output " << output << ";" << std::endl;
 	}
 	out << std::endl;
 
 	// output all wires
 	for (auto const& wire : data.netlist.wires) {
-
 		out << "wire " << wire << ";" << std::endl;
 	}
 	out << std::endl;
@@ -520,7 +494,8 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 				Data::Node(data.globalNodeNames.sink)
 			));
 
-	// add inputs as nodes, covers both PI and F2F inputs
+	// add inputs as nodes
+	// 
 	for (auto const& input : data.netlist.inputs) {
 
 		nodes.insert(std::make_pair(
@@ -529,17 +504,10 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 				));
 
 		// also add new node for primary inputs as child to global source
-		//
-		// avoid F2F inputs as much as possible, which have "_" in name
-		// note that some F2F inputs are PIs, so they will not avoided here; also note that avoiding F2F here only saves some
-		// runtime (fewer children to be checked), but it does not undermine the checking for cycles
-		//
-		if (input.find("_") == std::string::npos) {
-			nodes[data.globalNodeNames.source].children.emplace_back( &(nodes[input]) );
-		}
+		nodes[data.globalNodeNames.source].children.emplace_back( &(nodes[input]) );
 	}
 
-	// add outputs as nodes, covers both PO and F2F outputs
+	// add outputs as nodes
 	for (auto const& output : data.netlist.outputs) {
 
 		nodes.insert(std::make_pair(
@@ -548,16 +516,16 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 				));
 
 		// also add global sink as child for new node
-		//
-		// avoid F2F outputs as much as possible, which have "_" in name
-		// note that some F2F outputs are POs, so they will not avoided here; also note that avoiding F2F here only saves some
-		// runtime (fewer children to be checked), but it does not undermine the checking for cycles
-		//
-		if (output.find("_") == std::string::npos) {
-			nodes[output].children.emplace_back(
-					&(nodes[data.globalNodeNames.sink])
-				);
-		}
+		nodes[output].children.emplace_back( &(nodes[data.globalNodeNames.sink]) );
+	}
+
+	// add F2F ports as nodes
+	for (auto const& port : data.netlist.F2F) {
+
+		nodes.insert(std::make_pair(
+					port,
+					Data::Node(port)
+				));
 	}
 
 	// add gates as nodes
