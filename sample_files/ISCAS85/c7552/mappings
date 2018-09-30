@@ -218,17 +218,13 @@ bottom/g23970_A1 : top/bottom_g23970_A1 top/bottom_g23968_A1 top/bottom_g23961_B
 bottom/g23968_A1 : top/bottom_g23970_A1 top/bottom_g23968_A1 top/bottom_g23961_B1 top/bottom_g23943_A1
 bottom/g23961_B1 : top/bottom_g23970_A1 top/bottom_g23968_A1 top/bottom_g23961_B1 top/bottom_g23943_A1
 bottom/g23943_A1 : top/bottom_g23970_A1 top/bottom_g23968_A1 top/bottom_g23961_B1 top/bottom_g23943_A1
-bottom/g23949_A1 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 rm_assigns_buf_G469/A
-bottom/g23948_A1 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 rm_assigns_buf_G469/A
-bottom/g24015_A1 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 rm_assigns_buf_G469/A
-bottom/G469 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 rm_assigns_buf_G469/A
-bottom/G249 : rm_assigns_buf_G264/A top/bottom_G373 rm_assigns_buf_G281/A top/bottom_G410
-bottom/G373 : rm_assigns_buf_G264/A top/bottom_G373 rm_assigns_buf_G281/A top/bottom_G410
-bottom/G281 : rm_assigns_buf_G264/A top/bottom_G373 rm_assigns_buf_G281/A top/bottom_G410
-bottom/G410 : rm_assigns_buf_G264/A top/bottom_G373 rm_assigns_buf_G281/A top/bottom_G410
+bottom/g23949_A1 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 top/bottom_G373
+bottom/g23948_A1 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 top/bottom_G373
+bottom/g24015_A1 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 top/bottom_G373
+bottom/G373 : top/bottom_g23949_A1 top/bottom_g23948_A1 top/bottom_g24015_A1 top/bottom_G373
+bottom/G410 : top/bottom_G410
 bottom/G408 : top/bottom_G408
 bottom/G406 : top/bottom_G406
-bottom/G341 : rm_assigns_buf_G286/A
 top/bottom_g24062_ZN : bottom/g24062_ZN bottom/g2_ZN bottom/g23321_ZN bottom/g23331_ZN
 top/bottom_g2_ZN : bottom/g24062_ZN bottom/g2_ZN bottom/g23321_ZN bottom/g23331_ZN
 top/bottom_g23321_ZN : bottom/g24062_ZN bottom/g2_ZN bottom/g23321_ZN bottom/g23331_ZN
@@ -449,7 +445,4 @@ top/bottom_g24020_ZN : bottom/g24020_ZN bottom/g24029_ZN bottom/g24026_ZN bottom
 top/bottom_g24029_ZN : bottom/g24020_ZN bottom/g24029_ZN bottom/g24026_ZN bottom/g24052_ZN
 top/bottom_g24026_ZN : bottom/g24020_ZN bottom/g24029_ZN bottom/g24026_ZN bottom/g24052_ZN
 top/bottom_g24052_ZN : bottom/g24020_ZN bottom/g24029_ZN bottom/g24026_ZN bottom/g24052_ZN
-top/bottom_g24027_ZN : bottom/g24027_ZN rm_assigns_buf_G471/A rm_assigns_buf_G270/A rm_assigns_buf_G289/A
-top/G471 : bottom/g24027_ZN rm_assigns_buf_G471/A rm_assigns_buf_G270/A rm_assigns_buf_G289/A
-top/G273 : bottom/g24027_ZN rm_assigns_buf_G471/A rm_assigns_buf_G270/A rm_assigns_buf_G289/A
-top/G289 : bottom/g24027_ZN rm_assigns_buf_G471/A rm_assigns_buf_G270/A rm_assigns_buf_G289/A
+top/bottom_g24027_ZN : bottom/g24027_ZN
