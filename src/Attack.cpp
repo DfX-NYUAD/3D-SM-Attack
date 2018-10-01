@@ -14,6 +14,9 @@ int main (int argc, char** argv) {
 	std::cout << "Proximity attack on F2F interconnects camouflaging" << std::endl;
 	std::cout << "--------------------------------------------------" << std::endl << std::endl;
 
+	// set locale for output; for using thousand separators
+	std::cout.imbue(std::locale(""));
+
 	// parse program parameters and test files
 	IO::parseParametersFiles(data, argc, argv);
 
@@ -57,7 +60,6 @@ int main (int argc, char** argv) {
 		threads.clear();
 
 		if (!success) {
-			std::cout.imbue(std::locale(""));
 			std::cout << "Attack> Trials so far: " << trials << std::endl;
 		}
 	}
