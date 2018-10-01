@@ -14,7 +14,7 @@ for the attack are to derive a netlist without inducing any combinatorial loops,
 while resolving all obfuscated mappings.
 
 The code/binary has been tested on two systems: a 64-bit Ubuntu 16.04 LTS, and a 64-bit CentOS 6.9.
-To compile, default C++-11 libraries are required as well as pthread.
+To compile, default *C++-11* libraries are required as well as *pthread*.
 
 After compilation, to invoke the attack, use something like the following:
 
@@ -63,10 +63,10 @@ The output is something like this:
 	IO>
 	IO> Parsing the obfuscated F2F mappings ...
 	IO> Done
-	IO>  F2F outputs in bottom (there may be POs among them): 41
-	IO>   All mappings from bottom to top: 161
-	IO>  F2F outputs in top (there may be POs among them): 34
-	IO>   All mappings from top to bottom: 130
+	IO>  F2F outputs in bottom tier (there may be POs among them): 41
+	IO>   All the mapping candidates from bottom to top tier: 161
+	IO>  F2F outputs in top tier (there may be POs among them): 34
+	IO>   All the mapping candidates from top to bottom tier: 130
 	IO>
 	Attack> Trials so far: 1
 	Attack> Trials so far: 2

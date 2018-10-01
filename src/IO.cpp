@@ -152,10 +152,10 @@ void IO::parseMappings(Data& data) {
 	}
 
 	std::cout << "IO> Done" << std::endl;
-	std::cout << "IO>  F2F outputs in bottom (there may be POs among them): " << data.F2F.keys_bottom_to_top.size() << std::endl;
-	std::cout << "IO>   All mappings from bottom to top: " << data.F2F.bottom_to_top.size() << std::endl;
-	std::cout << "IO>  F2F outputs in top (there may be POs among them): " << data.F2F.keys_top_to_bottom.size() << std::endl;
-	std::cout << "IO>   All mappings from top to bottom: " << data.F2F.top_to_bottom.size() << std::endl;
+	std::cout << "IO>  F2F outputs in bottom tier (there may be POs among them): " << data.F2F.keys_bottom_to_top.size() << std::endl;
+	std::cout << "IO>   All the mapping candidates from bottom to top tier: " << data.F2F.bottom_to_top.size() << std::endl;
+	std::cout << "IO>  F2F outputs in top tier (there may be POs among them): " << data.F2F.keys_top_to_bottom.size() << std::endl;
+	std::cout << "IO>   All the mapping candidates from top to bottom tier: " << data.F2F.top_to_bottom.size() << std::endl;
 	std::cout << "IO> " << std::endl;
 }
 
