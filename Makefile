@@ -1,7 +1,7 @@
 #=============================================================================#
 # Application Name:
 #=============================================================================#
-APP := proximity_attack
+APP := 3D_F2F_Proximity_Attack
 #AUX := Correlation_TSC Variation_TSC Postprocessing_TSC
 ALL := $(APP) $(AUX)
 
