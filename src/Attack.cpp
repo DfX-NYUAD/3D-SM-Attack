@@ -379,8 +379,8 @@ void Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 				&(nodes[data.globalNodeNames.source])
 			);
 
-		// in case the run was successful, without having any cycle, evaluate that run (using the mutex)
-		if (success_trial) {
+		// in case the run was the first successful one, evaluate that run and generate obtained netlist (using the mutex)
+		if (success_trial & !success) {
 			m.lock();
 
 			success = true;
