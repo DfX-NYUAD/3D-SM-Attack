@@ -133,6 +133,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 	}
 }
 
+//TODO improve runtime for rewriting
 void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data) {
 	std::ofstream out;
 	unsigned total_connections;
@@ -141,7 +142,7 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	std::cout << "Attack>" << std::endl;
 	std::cout << "Attack> Success! Found F2F assignment without cycles" << std::endl;
 	std::cout << "Attack>" << std::endl;
-	std::cout << "Attack> Writing out netlist ..." << std::endl;
+	std::cout << "Attack> Rewriting netlist for F2F mappings ..." << std::endl;
 
 	out.open(data.files.out_netlist.c_str());
 
@@ -169,9 +170,12 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 			Attack::rewriteConnectivity(a, gate, data);
 		}
 	}
+	std::cout << "Attack> Done" << std::endl;
 
 	// 2) write out netlist
 	//
+	std::cout << "Attack> Writing out netlist ..." << std::endl;
+
 	out << "// Netlist recovered by proximity attack on obfuscated F2F mappings" << std::endl;
 	out << "//" << std::endl;
 	out << std::endl;

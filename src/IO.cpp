@@ -7,7 +7,7 @@ void IO::parseParametersFiles(Data& data, int const& argc, char** argv) {
 
 	// print command-line parameters
 	if (argc < 8) {
-		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v mappings.file cells.inputs cells.outputs out.v [threads]" << std::endl;
+		std::cout << "IO> Usage: " << argv[0] << " top.v bottom.v wrapper.v mappings.file cells.inputs cells.outputs out.v [threads]" << std::endl;
 		std::cout << "IO> " << std::endl;
 		std::cout << "IO> Mandatory parameter ``top.v'': Netlist for top tier" << std::endl;
 		std::cout << "IO> Mandatory parameter ``bottom.v'': Netlist for bottom tier" << std::endl;
@@ -347,6 +347,7 @@ void IO::parseRegularPorts(Data& data) {
 	std::cout << "IO> " << std::endl;
 };
 
+//TODO dbg logging; especially for exception as in line 495
 void IO::parseNetlist(Data& data, bool const& top_tier) {
 	std::ifstream in;
 	std::string line;
