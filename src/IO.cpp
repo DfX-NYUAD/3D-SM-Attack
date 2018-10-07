@@ -402,6 +402,19 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	in.clear() ;
 	in.seekg(0, in.beg);
 
+	// dbg log
+	//
+	if (IO::DBG) {
+
+		std::cout << "IO_DBG> Print all F2F inputs: " << std::endl;
+
+		for (auto const& port : data.netlist.F2F) {
+
+			std::cout << "IO_DBG>  " << port;
+			std::cout << std::endl;
+		}
+	}
+
 	// 2) parse F2F outputs, line by line
 	//
 	while (std::getline(in, line)) {
@@ -433,6 +446,19 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	in.clear() ;
 	in.seekg(0, in.beg);
 
+	// dbg log
+	//
+	if (IO::DBG) {
+
+		std::cout << "IO_DBG> Print all F2F inputs and outputs: " << std::endl;
+
+		for (auto const& port : data.netlist.F2F) {
+
+			std::cout << "IO_DBG>  " << port;
+			std::cout << std::endl;
+		}
+	}
+
 	// 3) parse wires, line by line
 	//
 	while (std::getline(in, line)) {
@@ -459,6 +485,19 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	// reset file handler
 	in.clear() ;
 	in.seekg(0, in.beg);
+
+	// dbg log
+	//
+	if (IO::DBG) {
+
+		std::cout << "IO_DBG> Print all wires: " << std::endl;
+
+		for (auto const& wire : data.netlist.wires) {
+
+			std::cout << "IO_DBG>  " << wire;
+			std::cout << std::endl;
+		}
+	}
 
 	// 4) parse gates, line by line
 	//
@@ -491,8 +530,18 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 				// gate name
 				linestream >> new_gate.name;
 
-				// find related cell; throws an exception otherwise
-				cell = &(data.cells.at(new_gate.type));
+				// find related cell
+				auto iter = data.cells.find(new_gate.type);
+				if (iter != data.cells.end()) {
+					cell = &(iter->second);
+				}
+				// report error otherwise
+				else {
+					std::cout << "IO>  Error: the gate \"" << new_gate.name << "\" is of type \"" << new_gate.type << "\"";
+					std::cout << ", but this type is not covered in your cells.inputs and cells.outputs files ..." << std::endl;
+					std::cout << "IO>  Exiting; check you library and cells.inputs/outputs files" << std::endl;
+					exit(1);
+				}
 			}
 
 			// all lines contains some output/input pin and its connectivity
@@ -549,25 +598,9 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	// finally, close file
 	in.close();
 
-	// dbg log of parsed tuples
+	// dbg log
 	//
 	if (IO::DBG) {
-
-		std::cout << "IO_DBG> Print all F2F ports: " << std::endl;
-
-		for (auto const& port : data.netlist.F2F) {
-
-			std::cout << "IO_DBG>  " << port;
-			std::cout << std::endl;
-		}
-
-		std::cout << "IO_DBG> Print all wires: " << std::endl;
-
-		for (auto const& wire : data.netlist.wires) {
-
-			std::cout << "IO_DBG>  " << wire;
-			std::cout << std::endl;
-		}
 
 		std::cout << "IO_DBG> Print all gates: " << std::endl;
 

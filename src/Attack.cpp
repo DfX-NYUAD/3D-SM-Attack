@@ -133,7 +133,6 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 	}
 }
 
-//TODO improve runtime for rewriting
 void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data) {
 	std::ofstream out;
 	unsigned total_connections;
