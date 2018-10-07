@@ -26,7 +26,7 @@ do
 		## run attack, grep only those lines with successfully generated keys
 		echo "Run $r in folder $folder ..."
 
-		timeout $timeout $work_dir/3D_F2F_Proximity_Attack top.v bottom.v wrapper.v mappings.file cells.inputs cells.outputs out_$r.v $threads | tee -a $r.log
+		timeout $timeout $work_dir/3D_F2F_Proximity_Attack top.v bottom.v wrapper.v mappings.file cells.inputs cells.outputs out_$r.v $threads | tee $r.log
 
 		echo "Done"
 	done
