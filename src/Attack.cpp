@@ -45,12 +45,15 @@ int main (int argc, char** argv) {
 	success = false;
 	trials = 0;
 
+	// init tracker for attack runtime
+	auto start_time = std::chrono::system_clock::now();
+
 	// run attack in parallel threads
 	while (!success) {
 
 		// init threads
 		for (unsigned t = 1; t <= data.threads; t++) {
-			threads.emplace_back( std::thread(Attack::trial, std::ref(data), std::ref(success), std::ref(trials), std::ref(m)) );
+			threads.emplace_back( std::thread(Attack::trial, std::ref(data), std::ref(success), std::ref(trials), std::ref(m), std::ref(start_time)) );
 		}
 		// join threads; the main thread execution will pause until all threads are done
 		for (std::thread& t : threads) {
@@ -138,8 +141,6 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	unsigned total_connections;
 	unsigned correct_connections;
 
-	std::cout << "Attack>" << std::endl;
-	std::cout << "Attack> Success! Found F2F assignment without cycles" << std::endl;
 	std::cout << "Attack>" << std::endl;
 	std::cout << "Attack> Rewriting netlist for F2F mappings ..." << std::endl;
 
@@ -339,7 +340,7 @@ void Attack::evaluateAndOutput(Data::AssignmentF2F const& assignment, Data& data
 	out.close();
 }
 
-void Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
+void Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m, std::chrono::time_point<std::chrono::system_clock>& start_time) {
 	bool success_trial;
 
 	// in case there's already a successful run, no need to continue
@@ -387,6 +388,15 @@ void Attack::trial(Data& data, bool& success, unsigned& trials, std::mutex& m) {
 			m.lock();
 
 			success = true;
+
+			std::cout << "Attack>" << std::endl;
+			std::cout << "Attack> Success! Found F2F assignment without cycles" << std::endl;
+
+			// also report attack time
+			std::chrono::duration<double> runtime = std::chrono::system_clock::now() - start_time;
+
+			std::cout << "Attack>" << std::endl;
+			std::cout << "Attack> Attack runtime: " << runtime.count() << " seconds" << std::endl;
 
 			// evaluate assignment and output netlist
 			Attack::evaluateAndOutput(assignment, data);

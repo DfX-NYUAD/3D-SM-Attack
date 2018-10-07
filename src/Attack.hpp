@@ -36,7 +36,8 @@ class Attack {
 				Data& data,
 				bool& success,
 				unsigned& trials,
-				std::mutex& m
+				std::mutex& m,
+				std::chrono::time_point<std::chrono::system_clock>& start_time
 			);
 		static bool tackleGraph(
 				std::unordered_map<std::string, Data::Node>& nodes,
