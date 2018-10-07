@@ -157,6 +157,13 @@ void IO::parseMappings(Data& data) {
 	std::cout << "IO>  F2F outputs in top tier (there may be POs among them): " << data.F2F.keys_top_to_bottom.size() << std::endl;
 	std::cout << "IO>   All the mapping candidates from top to bottom tier: " << data.F2F.top_to_bottom.size() << std::endl;
 	std::cout << "IO> " << std::endl;
+
+	// sanity check
+	if (data.F2F.bottom_to_top.empty() || data.F2F.top_to_bottom.empty()) {
+		std::cout << "IO> No F2F mappings found; exiting ..." << std::endl;
+		std::cout << "IO> Check your mappings file \"" << data.files.obfuscated_mappings << "\"" << std::endl;
+		exit(1);
+	}
 }
 
 void IO::parseCells(Data& data, bool const& outputs) {
@@ -255,6 +262,13 @@ void IO::parseCells(Data& data, bool const& outputs) {
 	std::cout << "IO> Done" << std::endl;
 	std::cout << "IO>  Cells: " << data.cells.size() << std::endl;
 	std::cout << "IO> " << std::endl;
+
+	// sanity check
+	if (data.cells.empty()) {
+		std::cout << "IO> No cells found; exiting ..." << std::endl;
+		std::cout << "IO> Check your cells file \"" << file << "\"" << std::endl;
+		exit(1);
+	}
 }
 
 void IO::parseRegularPorts(Data& data) {
@@ -345,14 +359,24 @@ void IO::parseRegularPorts(Data& data) {
 	std::cout << "IO>  Regular input ports: " << data.netlist.inputs.size() << std::endl;
 	std::cout << "IO>  Regular output ports: " << data.netlist.outputs.size() << std::endl;
 	std::cout << "IO> " << std::endl;
+
+	// sanity check
+	if (data.netlist.inputs.empty() || data.netlist.outputs.empty()) {
+		std::cout << "IO> No inputs/outputs found; exiting ..." << std::endl;
+		std::cout << "IO> Check your wrapper netlist \"" << data.files.wrapper_netlist << "\"" << std::endl;
+		exit(1);
+	}
 };
 
-//TODO dbg logging; especially for exception as in line 495
 void IO::parseNetlist(Data& data, bool const& top_tier) {
 	std::ifstream in;
 	std::string line;
 	std::string tmpstr;
 	std::string file;
+
+	unsigned F2F_count = data.netlist.F2F.size();
+	unsigned wires_count = data.netlist.wires.size();
+	unsigned gates_count = data.netlist.gates.size();
 
 	if (top_tier) {
 		file = data.files.top_netlist;
@@ -629,4 +653,21 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 	std::cout << "IO>  Total gates: " << data.netlist.gates.size() << std::endl;
 	std::cout << "IO> Note that counts also contain the instances from the parsing of the other netlist, if done already" << std::endl;
 	std::cout << "IO> " << std::endl;
+
+	// sanity checks
+	if (data.netlist.F2F.size() == F2F_count) {
+		std::cout << "IO> No F2F mappings found; exiting ..." << std::endl;
+		std::cout << "IO> Check your mappings file \"" << data.files.obfuscated_mappings << "\"" << std::endl;
+		exit(1);
+	}
+	if (data.netlist.wires.size() == wires_count) {
+		std::cout << "IO> No wires found; exiting ..." << std::endl;
+		std::cout << "IO> Check your netlist file \"" << file << "\"" << std::endl;
+		exit(1);
+	}
+	if (data.netlist.gates.size() == gates_count) {
+		std::cout << "IO> No gates found; exiting ..." << std::endl;
+		std::cout << "IO> Check your netlist file \"" << file << "\"" << std::endl;
+		exit(1);
+	}
 };
