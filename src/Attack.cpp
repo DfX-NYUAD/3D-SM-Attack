@@ -82,9 +82,9 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 		if (output.second == a.first || output.second == a.second) {
 
 			if (Attack::DBG) {
-				std::cout << "DBG>  Affected gate: " << gate.name;
-				std::cout << "; mapping: " << a.first << " -> " << a. second;
-				std::cout << "; affected output: " << output.first << "(" << output.second << ")" << std::endl;
+				std::cout << "DBG>  Affected gate: \"" << gate.name << "\"";
+				std::cout << "; mapping: \"" << a.first << "\" -> \"" << a. second << "\"";
+				std::cout << "; affected output: \"" << output.first << "\" (\"" << output.second << "\")" << std::endl;
 			}
 
 			// in case the assignment driver is a PO, rename the gate output towards that PO
@@ -100,7 +100,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 			data.netlist.wires.insert(output.second);
 
 			if (Attack::DBG) {
-				std::cout << "DBG>   New output: " << output.second << std::endl;
+				std::cout << "DBG>   New output: \"" << output.second << "\"" << std::endl;
 			}
 		}
 	}
@@ -112,9 +112,9 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 		if (input.second == a.first || input.second == a.second) {
 
 			if (Attack::DBG) {
-				std::cout << "DBG>  Affected gate: " << gate.name;
-				std::cout << "; mapping: " << a.first << " -> " << a. second;
-				std::cout << "; affected input: " << input.first << "(" << input.second << ")" << std::endl;
+				std::cout << "DBG>  Affected gate: \"" << gate.name << "\"";
+				std::cout << "; mapping: \"" << a.first << "\" -> \"" << a. second << "\"";
+				std::cout << "; affected input: \"" << input.first << "\" (\"" << input.second << "\")" << std::endl;
 			}
 
 			// in case the assignment driver is a PO, rename the gate input towards that PO
@@ -130,7 +130,7 @@ void Attack::rewriteConnectivity(std::pair<std::string, std::string> const& a, D
 			data.netlist.wires.insert(input.second);
 
 			if (Attack::DBG) {
-				std::cout << "DBG>   New input: " << input.second << std::endl;
+				std::cout << "DBG>   New input: \"" << input.second << "\"" << std::endl;
 			}
 		}
 	}
@@ -431,7 +431,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	if (!node->visited) {
 
 		if (Attack::DBG) {
-			std::cout << "DBG>  Proceed with node " << node->name <<";";
+			std::cout << "DBG>  Proceed with node \"" << node->name <<"\";";
 			std::cout << " not visited yet; mark as visited and as part of recursion" << std::endl;
 		}
 
@@ -444,7 +444,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 			auto const* child = node->children[c];
 
 			if (Attack::DBG) {
-				std::cout << "DBG>   Consider node " << node->name << "'s child: " << child->name;
+				std::cout << "DBG>   Consider node \"" << node->name << "\"'s child: \"" << child->name << "\"";
 				std::cout << "; child " << c + 1 << "/" << node->children.size() << std::endl;
 			}
 
@@ -453,7 +453,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 			if (!child->visited && Attack::checkGraphForCycles(child)) {
 
 				if (Attack::DBG) {
-					std::cout << "DBG> Return from recursive check of node " << node->name << "'s child: " << child->name;
+					std::cout << "DBG> Return from recursive check of node \"" << node->name << "\"'s child: \"" << child->name << "\"";
 					std::cout << "; a cycle was found ..." << std::endl;
 				}
 
@@ -465,7 +465,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 			else if (child->recursion) {
 
 				if (Attack::DBG) {
-					std::cout << "DBG>   Cycle found; passed this node " << child->name << " already during recursion" << std::endl;
+					std::cout << "DBG>   Cycle found; passed this node \"" << child->name << "\" already during recursion" << std::endl;
 				}
 
 				return true;
@@ -475,7 +475,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 			// 
 			else {
 				if (Attack::DBG) {
-					std::cout << "DBG>   Cleared node " << node->name << "'s child: " << child->name;
+					std::cout << "DBG>   Cleared node \"" << node->name << "\"'s child: " << child->name;
 					std::cout << "; child " << c + 1 << "/" << node->children.size() << std::endl;
 				}
 			}
@@ -483,7 +483,7 @@ bool Attack::checkGraphForCycles(Data::Node const* node) {
 	}
 
 	if (Attack::DBG) {
-		std::cout << "DBG> Check graph for cycles; DONE consider node: " << node->name << std::endl;
+		std::cout << "DBG> Check graph for cycles; DONE consider node: \"" << node->name << "\"" << std::endl;
 	}
 
 	// after return from recursion; mark as "not anymore part of a recursion"
@@ -744,11 +744,11 @@ bool Attack::tackleGraph(std::unordered_map<std::string, Data::Node>& nodes, Dat
 			//edges += node.parents.size();
 
 			if (Attack::DBG) {
-				std::cout << "DBG>  " << node.name << ":" << std::endl;
+				std::cout << "DBG>  \"" << node.name << "\":" << std::endl;
 
 				std::cout << "DBG>   Children [" << node.children.size() << "]:";
 				for (auto const* child : node.children) {
-					std::cout << " " << child->name;
+					std::cout << " \"" << child->name << "\"";
 				}
 				std::cout << std::endl;
 
@@ -779,7 +779,7 @@ bool Attack::tackleF2F(std::unordered_set<std::string>& output_set, std::unorder
 			std::cout << "DBG> Remaining output_set [" << output_set.size() << "]:" << std::endl;
 
 			for (auto const& output : output_set) {
-				std::cout << "DBG>  " << output << std::endl;
+				std::cout << "DBG>  \"" << output << "\"" << std::endl;
 			}
 		}
 
@@ -789,12 +789,12 @@ bool Attack::tackleF2F(std::unordered_set<std::string>& output_set, std::unorder
 			);
 
 		if (Attack::DBG) {
-			std::cout << "DBG> output: " << *output << std::endl;
+			std::cout << "DBG> output: \"" << *output << "\"" << std::endl;
 			std::cout << "DBG>  Remaining inputs -- in other tier! -- for that output [" << input_map.count(*output) << "]:" << std::endl;
 
 			auto iter = input_map.equal_range(*output);
 			for (auto input = iter.first; input != iter.second; ++input) {
-				std::cout << "DBG>   " << (*input).second << std::endl;
+				std::cout << "DBG>   \"" << (*input).second << "\"" << std::endl;
 			}
 		}
 
@@ -823,9 +823,9 @@ bool Attack::tackleF2F(std::unordered_set<std::string>& output_set, std::unorder
 
 		if (Attack::DBG) {
 			std::cout << "DBG>   Memorize the assignment in the graph..." << std::endl;
-			std::cout << "DBG>    Node " << nodes.find(*output)->second.name << "'s new set of children:" << std::endl;
+			std::cout << "DBG>    Node \"" << nodes.find(*output)->second.name << "\"'s new set of children:" << std::endl;
 			for (auto const* child : nodes.find(*output)->second.children) {
-				std::cout << "DBG>     " << child->name << std::endl;
+				std::cout << "DBG>     \"" << child->name << "\"" << std::endl;
 			}
 		}
 

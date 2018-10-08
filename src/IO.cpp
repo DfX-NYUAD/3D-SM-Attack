@@ -140,14 +140,14 @@ void IO::parseMappings(Data& data) {
 
 		for (auto const& mapping : data.F2F.bottom_to_top) {
 
-			std::cout << "IO_DBG>  " << mapping.first << " : " << mapping.second << std::endl;
+			std::cout << "IO_DBG>  \"" << mapping.first << "\" : \"" << mapping.second << "\"" << std::endl;
 		}
 
 		std::cout << "IO_DBG> Print all mappings for top_to_bottom: " << std::endl;
 
 		for (auto const& mapping : data.F2F.top_to_bottom) {
 
-			std::cout << "IO_DBG>  " << mapping.first << " : " << mapping.second << std::endl;
+			std::cout << "IO_DBG>  \"" << mapping.first << "\" : \"" << mapping.second << "\"" << std::endl;
 		}
 	}
 
@@ -242,16 +242,16 @@ void IO::parseCells(Data& data, bool const& outputs) {
 		for (auto const& cell_iter : data.cells) {
 			Data::Cell const& cell = cell_iter.second;
 
-			std::cout << "IO_DBG>  " << cell.type;
+			std::cout << "IO_DBG>  \"" << cell.type << "\"";
 
 			std::cout << " OUT = ( ";
 			for (auto const& output : cell.outputs) {
-				std::cout << output << " ";
+				std::cout << "\"" << output << "\" ";
 			}
 			std::cout << ")";
 			std::cout << " IN = ( ";
 			for (auto const& input : cell.inputs) {
-				std::cout << input << " ";
+				std::cout << "\"" << input << "\" ";
 			}
 			std::cout << ")";
 
@@ -342,7 +342,7 @@ void IO::parseRegularPorts(Data& data) {
 
 		for (auto const& input : data.netlist.inputs) {
 
-			std::cout << "IO_DBG>  " << input;
+			std::cout << "IO_DBG>  \"" << input << "\"";
 			std::cout << std::endl;
 		}
 
@@ -350,7 +350,7 @@ void IO::parseRegularPorts(Data& data) {
 
 		for (auto const& output : data.netlist.outputs) {
 
-			std::cout << "IO_DBG>  " << output;
+			std::cout << "IO_DBG>  \"" << output << "\"";
 			std::cout << std::endl;
 		}
 	}
@@ -434,7 +434,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		for (auto const& port : data.netlist.F2F) {
 
-			std::cout << "IO_DBG>  " << port;
+			std::cout << "IO_DBG>  \"" << port << "\"";
 			std::cout << std::endl;
 		}
 	}
@@ -478,7 +478,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		for (auto const& port : data.netlist.F2F) {
 
-			std::cout << "IO_DBG>  " << port;
+			std::cout << "IO_DBG>  \"" << port << "\"";
 			std::cout << std::endl;
 		}
 	}
@@ -518,7 +518,7 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		for (auto const& wire : data.netlist.wires) {
 
-			std::cout << "IO_DBG>  " << wire;
+			std::cout << "IO_DBG>  \"" << wire << "\"";
 			std::cout << std::endl;
 		}
 	}
@@ -630,16 +630,16 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 
 		for (Data::Gate const& gate : data.netlist.gates) {
 
-			std::cout << "IO_DBG>  " << gate.type << " " << gate.name;
+			std::cout << "IO_DBG>  \"" << gate.type << "\" \"" << gate.name << "\"";
 
 			std::cout << " OUT = ( ";
 			for (auto const& output : gate.outputs) {
-				std::cout << output.first << ": " << output.second << " ";
+				std::cout << "\"" << output.first << "\": \"" << output.second << "\" ";
 			}
 			std::cout << ")";
 			std::cout << " IN = ( ";
 			for (auto const& input : gate.inputs) {
-				std::cout << input.first << ": " << input.second << " ";
+				std::cout << "\"" << input.first << "\": \"" << input.second << "\" ";
 			}
 			std::cout << ")";
 
