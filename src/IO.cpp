@@ -580,9 +580,14 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 					size_t pos_begin = line.find_last_of("(") + 1;
 					size_t pos_end = line.find_first_of(")");
 
+					// remove heading/trailing whitespaces, if any, using stream operation
+					std::string connected;
+					std::istringstream connected_stream(line.substr(pos_begin, pos_end - pos_begin));
+					connected_stream >> connected;
+
 					new_gate.outputs.insert(std::make_pair(
 								pin,
-								line.substr(pos_begin, pos_end - pos_begin)
+								connected
 							));
 
 					break;
@@ -598,9 +603,14 @@ void IO::parseNetlist(Data& data, bool const& top_tier) {
 					size_t pos_begin = line.find_last_of("(") + 1;
 					size_t pos_end = line.find_first_of(")");
 
+					// remove heading/trailing whitespaces, if any, using stream operation
+					std::string connected;
+					std::istringstream connected_stream(line.substr(pos_begin, pos_end - pos_begin));
+					connected_stream >> connected;
+
 					new_gate.inputs.insert(std::make_pair(
 								pin,
-								line.substr(pos_begin, pos_end - pos_begin)
+								connected
 							));
 
 					break;
